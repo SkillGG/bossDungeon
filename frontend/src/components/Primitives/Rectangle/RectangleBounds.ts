@@ -1,8 +1,11 @@
 import { Game } from "../../../game";
 import { Vector2, Vector_2, Vector4 } from "../../../utils/utils";
 
-
 export class RectangleBounds {
+    static get zero() {
+        return new RectangleBounds(0, 0, 0, 0);
+    }
+
     constructor(x: Vector2, y: Vector2);
     constructor(x: number, y: number, w: number, h: number);
     constructor(x: Vector_2, y: Vector2);

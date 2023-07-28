@@ -1,7 +1,32 @@
 * {
-  box-sizing: border-box;
+    box-sizing: border-box;
 }
-#board{
-  width: 100vw;
-  height: 100vh;
+
+nav {
+  z-index: 1;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+}
+
+#app {
+    display: grid;
+}
+
+#board_container {
+    position: absolute;
+    display: grid;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    align-items: center;
+    margin: auto;
+}
+
+#board {
+    align-self: center;
+    justify-self: center;
 }

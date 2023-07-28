@@ -1,16 +1,27 @@
 import { Hideable, getTextMeasures } from "../../../utils/utils";
 import { BoundedGameObject } from "../../GameObject";
+import { RRectangle, RRectangleStyle } from "../Rectangle/RRectangle";
 import { RectangleStyle, Rectangle } from "../Rectangle/Rectangle";
 import { RectangleBounds } from "../Rectangle/RectangleBounds";
-
 
 type AlignText = "center" | "right" | "left";
 type JustifyText = "center" | "top" | "bottom";
 
-export interface LabelWithBorderStyle {
+interface RectStyle {
     label?: Partial<LabelTextStyle>;
     border?: Partial<RectangleStyle>;
 }
+
+interface RoundedStyle {
+    label?: Partial<LabelTextStyle>;
+    border?: Partial<RRectangleStyle>;
+    rounded: true;
+}
+
+export type LabelWithBorderStyle = RectStyle | RoundedStyle;
+
+const isRoundedStyle = (style: LabelWithBorderStyle): style is RoundedStyle =>
+    (style as any).rounded;
 
 export interface LabelTextStyle {
     textColor: string;
@@ -27,7 +38,7 @@ export const LabelDefaultStyle: LabelTextStyle = {
 };
 
 export class Label extends BoundedGameObject implements Hideable {
-    border: Rectangle;
+    border: Rectangle | RRectangle;
     style: LabelTextStyle;
     initStyle: LabelWithBorderStyle;
     constructor(
@@ -39,9 +50,15 @@ export class Label extends BoundedGameObject implements Hideable {
     ) {
         super(id, bounds, zIndex);
         this.style = { ...LabelDefaultStyle, ...style?.label };
-        this.border = new Rectangle(`${id}_border`, this.bounds, {
-            ...style?.border,
-        });
+        if (!style || !isRoundedStyle(style)) {
+            this.border = new Rectangle(`${id}_border`, this.bounds, {
+                ...style?.border,
+            });
+        } else {
+            this.border = new RRectangle(`${id}_border`, this.bounds, {
+                ...style?.border,
+            });
+        }
         this.initStyle = { ...style };
     }
 
@@ -75,7 +92,9 @@ export class Label extends BoundedGameObject implements Hideable {
                 ? this.bounds.y + textBounds.ascent
                 : this.style.valign === "bottom"
                 ? this.bounds.y + this.bounds.height - textBounds.descent
-                : this.bounds.y + (boundHeight + textHeight) / 2;
+                : this.bounds.y +
+                  (boundHeight + textHeight) / 2 -
+                  textBounds.descent;
         ctx.fillStyle = this.style.textColor;
         ctx.fillText(
             this.text,

@@ -14,6 +14,7 @@ export class InputManager implements Updateable {
     allowedKeys: Set<string>;
     _prevMousePostiion: Vector2;
     _mousePosition: Vector2;
+    typing: boolean = false;
 
     get mousePosition(): Vector2 {
         const mousePosInCanvas = Game.getNormalVector(this._mousePosition);
@@ -125,6 +126,8 @@ export class InputManager implements Updateable {
         }
     }
     handleKeyDown(e: KeyboardEvent) {
+        this.typing = e.target instanceof HTMLInputElement;
+        if (this.typing) return;
         this.keysPressed.add(e.code);
         if (!this.allowedKeys.has(e.code)) e.preventDefault();
     }
@@ -134,20 +137,17 @@ export class InputManager implements Updateable {
     }
     handleKeyUp(e: KeyboardEvent) {
         this.keysPressed.delete(e.code);
-        e.preventDefault();
     }
     handlePointerUp(e: PointerEvent) {
         this.handlePointerMove(e);
         this.pointerButtonsPressed.delete(e.button);
         this.pointerButtonsClicked.add(e.button);
         this.pointerStateChanged = true;
-        e.preventDefault();
     }
     handlePointerDown(e: PointerEvent) {
         this.handlePointerMove(e);
         this.pointerButtonsPressed.add(e.button);
         this.pointerStateChanged = true;
-        e.preventDefault();
     }
     getMouseInputScaleFactors(): Vector_2 {
         if (!Game.instance) return { x: 1, y: 1 };

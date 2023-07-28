@@ -10,7 +10,7 @@ export enum GameState {
 }
 
 SpriteLoader.loadAllSprites().then(() => {
-    const gameBox = document.querySelector("#app");
+    const gameBox = document.querySelector("#board_container");
 
     const ui = new GameSettings<GameState>();
 
@@ -26,6 +26,7 @@ SpriteLoader.loadAllSprites().then(() => {
      * Register all GameStates
      */
     game.manager.registerGameState(...Object.values(GameState));
+
     /**
      * Add objects
      */
