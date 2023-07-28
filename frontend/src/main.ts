@@ -1,6 +1,8 @@
 import { GameSettings } from "./UI";
 import { FpsCounter } from "./components/FpsCounter/fpsCounter";
 import { GameMenu } from "./components/Menu/menu";
+import { Rectangle } from "./components/Primitives/Rectangle/Rectangle";
+import { RectangleBounds } from "./components/Primitives/Rectangle/RectangleBounds";
 import { SpriteLoader } from "./components/Primitives/Sprite/SpriteLoader";
 import { Game } from "./game";
 import "./style.css";
@@ -38,6 +40,7 @@ SpriteLoader.loadAllSprites().then(() => {
 
     game.manager.addStateManager(GameSettings.manager);
     GameSettings.manager.registerObjects();
+    game.manager.addObject(new Rectangle("kwadrat", new RectangleBounds([5,5],[10,10])), GameState.MENU)
 
     /**
      * Game loop
@@ -62,5 +65,6 @@ SpriteLoader.loadAllSprites().then(() => {
     game.run();
 
     previous = performance.now();
+
     loop();
 });

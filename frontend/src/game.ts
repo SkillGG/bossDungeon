@@ -58,6 +58,7 @@ export class Game<T extends string>
             this.stop();
             return;
         }
+        this.id="board";
         this.canvasContext = cC;
         this.width = this.gameWidth;
         this.height = this.gameHeight;
