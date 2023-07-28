@@ -164,13 +164,6 @@ export class InputManager implements Updateable {
     }
     handleResize() {
         if (!Game.instance) return;
-        // save the window ratio
-        if (matchMedia("(max-height: 805px)").matches) {
-            const newWidth = (Game.WIDTH / Game.HEIGHT) * window.innerHeight;
-            Game.instance.style.maxWidth = Math.min(newWidth, 600) + "px";
-        } else {
-            Game.instance.style.maxWidth = "";
-        }
         this.mouseInputScale = this.getMouseInputScaleFactors();
     }
     forceTouchUp() {
