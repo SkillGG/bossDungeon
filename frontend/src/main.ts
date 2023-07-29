@@ -12,7 +12,7 @@ export enum GameState {
 }
 
 SpriteLoader.loadAllSprites().then(() => {
-    const gameBox = document.querySelector("#app");
+    const gameBox = document.querySelector("#board_container");
 
     const ui = new GameSettings<GameState>();
 
@@ -28,6 +28,7 @@ SpriteLoader.loadAllSprites().then(() => {
      * Register all GameStates
      */
     game.manager.registerGameState(...Object.values(GameState));
+
     /**
      * Add objects
      */
@@ -40,7 +41,6 @@ SpriteLoader.loadAllSprites().then(() => {
 
     game.manager.addStateManager(GameSettings.manager);
     GameSettings.manager.registerObjects();
-    game.manager.addObject(new Rectangle("kwadrat", new RectangleBounds([5,5],[10,10])), GameState.MENU)
 
     /**
      * Game loop

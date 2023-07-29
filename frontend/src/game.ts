@@ -25,6 +25,17 @@ export class Game<T extends string>
     readonly gameHeight: number = Game.HEIGHT;
     readonly gameWidth: number = Game.WIDTH;
 
+    private _playername: string | null = null;
+
+    set playername(s: string | null) {
+        if (!s) return;
+        this._playername = s;
+    }
+
+    get playername() {
+        return this._playername;
+    }
+
     static input: InputManager = new InputManager();
 
     static instance: Game<any> | null = null;
@@ -58,7 +69,7 @@ export class Game<T extends string>
             this.stop();
             return;
         }
-        this.id="board";
+        this.id = "board";
         this.canvasContext = cC;
         this.width = this.gameWidth;
         this.height = this.gameHeight;

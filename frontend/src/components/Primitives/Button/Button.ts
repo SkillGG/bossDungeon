@@ -16,7 +16,7 @@ export interface ButtonClickEvent extends ButtonMouseEvent {
 
 type ButtonStyle = LabelWithBorderStyle;
 
-interface ButtonOnCalls {
+export interface ButtonOnCalls {
     onclick?: (ev: ButtonClickEvent) => void;
     onenter?: (ev: ButtonMouseEvent) => void;
     onleave?: (ev: ButtonMouseEvent) => void;
