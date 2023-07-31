@@ -12,6 +12,8 @@ export class GameMenu extends StateManager<GameState> {
 
     mapSize = 10;
 
+    eventSource?: EventSource;
+
     nameLabel: Label;
     settingsButton: Button;
     joinRoomButton: Button;
@@ -51,10 +53,19 @@ export class GameMenu extends StateManager<GameState> {
             new RectangleBounds(Game.WIDTH / 2 - 90, 90 + 90 * 1, 180, 65),
             {
                 ...buttonHover,
-                onclick() {
-                    const eS = new EventSource("http://localhost:3000/events");
-                    eS.onopen = () => {
-                        eS.onmessage = (...a) => console.log(...a);
+                onclick: () => {
+                    if (this.eventSource) {
+                        console.error("event source already exists!");
+                        return;
+                    }
+                    this.eventSource = new EventSource(
+                        "http://localhost:8080/events"
+                    );
+                    this.eventSource.onmessage = () => {
+                        console.log("message");
+                    };
+                    this.eventSource.onopen = () => {
+                        console.log("opened");
                     };
                 },
             },
@@ -71,7 +82,14 @@ export class GameMenu extends StateManager<GameState> {
         this.settingsButton = new Button(
             `btnSettings`,
             new RectangleBounds(Game.WIDTH / 2 - 90, 90 + 90 * 2, 180, 65),
-            buttonHover,
+            {
+                ...buttonHover,
+                onclick: () => {
+                    console.log("closing event source");
+                    this.eventSource?.close();
+                    this.eventSource = undefined;
+                },
+            },
             "Settings",
             {
                 rounded: true,

@@ -8,7 +8,7 @@
     "frontend": "cd ./frontend & npx vite",
     "start": "conc \"npm:backend\" \"npm:frontend\"",
     "install-frontend": "cd ./frontend & npm i",
-    "install-backend": "cd ./frontend & npm i",
+    "install-backend": "cd ./backend & npm i",
     "install-shared": "cd ./shared & npm i",
     "setup": "npm i & conc \"npm:install-frontend\" \"npm:install-backend\" \"npm:install-shared\""
   },

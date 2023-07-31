@@ -1,5 +1,5 @@
 import z from "zod";
 
-const eventData = z.object({ type: z.string() });
+export const eventData = z.object({ type: z.string() });
 
-type eventData = z.infer<typeof eventData>;
+export type eventData = z.infer<typeof eventData>;

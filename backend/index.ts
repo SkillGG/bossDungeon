@@ -1,48 +1,91 @@
-import EventEmitter from "events";
 import express, { Express, Request, Response } from "express";
+
+import { EventEmitter, UserSSEConnection } from "./utils";
+
 const app = express();
+
+const getLastID = () => {
+    return conns.length;
+};
+
+type UserSSEEvents = { close: []; sendData: [{ type: string }]; leave: [] };
+
+const conns: UserSSEConnection<UserSSEEvents>[] = [];
 
 const addSSERoute = (
     route: string,
+    options: {
+        connBuilder: (req: Request) => UserSSEConnection<UserSSEEvents>;
+    },
     sseFunction: (
-        emitter: EventEmitter
-    ) => (req: Request, res: Response) => void
+        req: Request,
+        res: Response,
+        conn: UserSSEConnection<UserSSEEvents>
+    ) => void
 ) => {
     console.log("Adding SSE Route", route);
     app.get(route, (req, res) => {
-        const emitter = new EventEmitter();
-        console.log("Got /events");
-        res.set({
-            "Cache-Control": "no-cache",
-            "Content-Type": "text/event-stream",
-            Connection: "keep-alive",
-        });
-        res.flushHeaders();
-
-        // Tell the client to retry every 10 seconds if connectivity is lost
-        res.write("retry: 10000\n\n");
+        const conn = options.connBuilder(req);
+        req.socket.setTimeout(0);
+        req.socket.setNoDelay(true);
+        req.socket.setKeepAlive(true);
+        res.statusCode = 200;
+        res.setHeader("Content-Type", "text/event-stream");
+        res.setHeader("Cache-Control", "no-cache");
+        res.setHeader("X-Accel-Buffering", "no");
+        res.setHeader("Access-Control-Allow-Origin", "*");
+        if (req.httpVersion !== "2.0") {
+            res.setHeader("Connection", "keep-alive");
+        }
+        console.log("Somebody requested /events");
 
         res.on("close", () => {
-            emitter.emit("close");
+            conn.emit("close");
         });
 
-        emitter.on("sendData", (data)=>{
-            
+        conn.on("sendData", (data) => {
+            if (res.closed) {
+                console.error("Connection closed!");
+                return;
+            }
+            console.log("sending data", data);
+            res.write("data: " + JSON.stringify(data) + "\n\n", (e) => {
+                if (e) console.log(e);
+            });
         });
 
+        conns.push(conn);
+
+        sseFunction(req, res, conn);
     });
 };
 
-const emitters: EventEmitter[] = [];
-
-addSSERoute("/events", (emitter: EventEmitter) => {
-    emitters.push(emitter);
-    emitter.on("close", () => {
-        // do closing action
-    });
-    emitter.on("", () => {});
-    return () => {};
-});
+addSSERoute(
+    "/events",
+    {
+        connBuilder: () => {
+            const conn = new UserSSEConnection(`${getLastID()}`);
+            console.log("creating new connection", conn.userid);
+            return conn;
+        },
+    },
+    (req: Request, res: Response, conn: UserSSEConnection<UserSSEEvents>) => {
+        conn.once("close", () => {
+            // do closing action
+            conn.close();
+            UserSSEConnection.emitToAll(conns, (c) => !c.isClosed)("sendData", {
+                type: "leave",
+            });
+        });
+        conn.on("leave", () => {
+            res.write("Player left!");
+        });
+        UserSSEConnection.emitToAll(conns, (c) => !c.isClosed)("sendData", {
+            type: "join",
+        });
+        return () => {};
+    }
+);
 
 app.listen(8080, () => {
     console.log("listening on http://localhost:8080");
