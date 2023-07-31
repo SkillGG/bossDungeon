@@ -1,8 +1,6 @@
 import { GameSettings } from "./UI";
 import { FpsCounter } from "./components/FpsCounter/fpsCounter";
 import { GameMenu } from "./components/Menu/menu";
-import { Rectangle } from "./components/Primitives/Rectangle/Rectangle";
-import { RectangleBounds } from "./components/Primitives/Rectangle/RectangleBounds";
 import { SpriteLoader } from "./components/Primitives/Sprite/SpriteLoader";
 import { Game } from "./game";
 import "./style.css";

@@ -49,7 +49,15 @@ export class GameMenu extends StateManager<GameState> {
         this.joinRoomButton = new Button(
             `btnJoin`,
             new RectangleBounds(Game.WIDTH / 2 - 90, 90 + 90 * 1, 180, 65),
-            buttonHover,
+            {
+                ...buttonHover,
+                onclick() {
+                    const eS = new EventSource("http://localhost:3000/events");
+                    eS.onopen = () => {
+                        eS.onmessage = (...a) => console.log(...a);
+                    };
+                },
+            },
             "Join",
             {
                 rounded: true,
