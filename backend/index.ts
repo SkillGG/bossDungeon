@@ -4,20 +4,17 @@ import {
     UserConnection as RoomConnection,
     UserConnection,
 } from "./GameRoom";
-import { SSEResponse, UserSSEConnection } from "./utils";
+import { SSEResponse } from "./utils";
 import { Request } from "express";
 import z from "zod";
-import { UserSSEEvents, playerIDShape } from "../shared/events";
+import { playerIDShape } from "../shared/events";
 
 const gameRoom = new GameRoom();
 
 addSSERoute(
     "/enter/:playerid",
     {
-        connBuilder: () => {
-            const conn = new RoomConnection(`${++RoomConnection.id}`);
-            return conn;
-        },
+        connBuilder: () => new RoomConnection(`${++RoomConnection.id}`),
         method: "get",
     },
     (req: Request, res: SSEResponse<RoomConnection>, conn: RoomConnection) => {
@@ -26,7 +23,7 @@ addSSERoute(
             res.status(404).send("Room link is not valid!");
             return;
         }
-        const { playerid } = req.params;
+        const { playerid } = safeParams.data;
 
         if (gameRoom.openedPlayers.has(playerid)) {
             res.status(400).send("Player already exists!");
@@ -37,7 +34,7 @@ addSSERoute(
         conn.once("close", () => {
             // close connection
             conn.close();
-            // send to everyone that you're leaving
+            // send to everyone that player is leaving
             gameRoom.leave(playerid);
         });
 
@@ -57,18 +54,18 @@ addSSERoute(
             // send ready event to client
             res.sseevent("unready", data);
         });
+        // send to everyone that player is joining
         gameRoom.join(playerid, conn);
     }
 );
 
 addRoute("/lobby/ready/:playerid", { method: "get" }, (req, res) => {
-    const enterRoomParams = z.object({ playerid: z.string() });
-    const safeParams = enterRoomParams.safeParse(req.params);
+    const safeParams = playerIDShape.safeParse(req.params);
     if (!safeParams.success) {
         res.status(404).send("Room link is not valid!");
         return;
     }
-    const { playerid } = req.params;
+    const { playerid } = safeParams.data;
 
     gameRoom.markReady(playerid);
 
@@ -76,13 +73,12 @@ addRoute("/lobby/ready/:playerid", { method: "get" }, (req, res) => {
 });
 
 addRoute("/lobby/unready/:playerid", { method: "get" }, (req, res) => {
-    const enterRoomParams = z.object({ playerid: z.string() });
-    const safeParams = enterRoomParams.safeParse(req.params);
+    const safeParams = playerIDShape.safeParse(req.params);
     if (!safeParams.success) {
         res.status(404).send("Room link is not valid!");
         return;
     }
-    const { playerid } = req.params;
+    const { playerid } = safeParams.data;
 
     gameRoom.markUnready(playerid);
 

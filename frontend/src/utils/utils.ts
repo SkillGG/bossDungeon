@@ -1,7 +1,6 @@
 // #region Math
 
 import {
-    UserSSEEvents,
     playerIDShape,
     roomDataShape,
     timerShape,
