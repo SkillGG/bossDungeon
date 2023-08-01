@@ -1,7 +1,6 @@
-import { Hideable } from "../../../utils/utils";
+import { Hideable, Styled } from "../../../utils/utils";
 import { BoundedGameObject } from "../../GameObject";
 import { RectangleBounds } from "./RectangleBounds";
-
 
 export interface RectangleStyle {
     fillColor: string;
@@ -15,8 +14,12 @@ export const RectangleDefaultStyle: RectangleStyle = {
     strokeWidth: 1,
 };
 
-export class Rectangle extends BoundedGameObject implements Hideable {
+export class Rectangle
+    extends BoundedGameObject
+    implements Hideable, Styled<RectangleStyle>
+{
     style: RectangleStyle;
+    initStyles: RectangleStyle;
     constructor(
         id: string,
         bounds: RectangleBounds,
@@ -25,6 +28,10 @@ export class Rectangle extends BoundedGameObject implements Hideable {
     ) {
         super(id, bounds, zIndex);
         this.style = { ...RectangleDefaultStyle, ...style };
+        this.initStyles = { ...this.style };
+    }
+    clearStyles(): void {
+        this.style = { ...this.initStyles };
     }
     #hidden = false;
     hide(): void {

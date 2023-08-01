@@ -1,8 +1,6 @@
-import { GameSettings } from "./UI";
+
 import { InputManager } from "./components/KeyboardManager";
 import { ObjectManager } from "./components/ObjectManager";
-import { GameMenu } from "./game/Menu/menu";
-import { Room } from "./game/Room/room";
 import { GameState } from "./main";
 import {
     Renderable,

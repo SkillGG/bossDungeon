@@ -1,4 +1,4 @@
-import { Hideable, getTextMeasures } from "../../../utils/utils";
+import { Hideable, Styled, getTextMeasures } from "../../../utils/utils";
 import { BoundedGameObject } from "../../GameObject";
 import { RRectangle, RRectangleStyle } from "../Rectangle/RRectangle";
 import { RectangleStyle, Rectangle } from "../Rectangle/Rectangle";
@@ -37,10 +37,13 @@ export const LabelDefaultStyle: LabelTextStyle = {
     textColor: "black",
 };
 
-export class Label extends BoundedGameObject implements Hideable {
+export class Label
+    extends BoundedGameObject
+    implements Hideable, Styled<LabelTextStyle>
+{
     border: Rectangle | RRectangle;
     style: LabelTextStyle;
-    initStyle: LabelWithBorderStyle;
+    initStyles: LabelTextStyle;
     constructor(
         id: string,
         bounds: RectangleBounds,
@@ -59,7 +62,11 @@ export class Label extends BoundedGameObject implements Hideable {
                 ...style?.border,
             });
         }
-        this.initStyle = { ...style };
+        this.initStyles = { ...this.style };
+    }
+
+    clearStyles() {
+        this.style = { ...this.initStyles };
     }
 
     #hidden = false;

@@ -34,7 +34,7 @@ export class EventEmitter<EventMap extends Record<string, any[]>> {
             list(...data);
         }
         if (this.prefix)
-            console.log(`got emitted ${id} in ${this.prefix} with ${data}`);
+            console.log(`emitted ${id} in ${this.prefix} with`, data);
     }
     removeAllEventListeners() {
         this.listeners = {};
@@ -59,7 +59,7 @@ export class UserSSEConnection<
     constructor(id: string) {
         super();
         this.userid = id;
-        this.prefix = id;
+        // this.prefix = id;
     }
     get isClosed() {
         return this.closed;
@@ -92,7 +92,6 @@ export class SSEResponse<T extends UserSSEConnection<Record<string, any[]>>> {
         id: K,
         ...data: ConnectionGeneric<T>[K]
     ) {
-        console.log(`event: ${id}`);
         this.res.write(`event: ${id}\n`);
         this.ssedata(...data);
         return this;
@@ -103,7 +102,6 @@ export class SSEResponse<T extends UserSSEConnection<Record<string, any[]>>> {
     ) {
         for (const d of data) {
             const dt = JSON.stringify(d);
-            console.log(`data: ${dt}`);
             this.res.write(`data: ${dt}\n`);
         }
         this.res.write(`\n`);

@@ -1,99 +1,108 @@
 import { UserSSEEvents } from "../../../../shared/events";
-import { ObjectManager } from "../../components/ObjectManager";
-import { Label } from "../../components/Primitives/Label/Label";
-import { RectangleBounds } from "../../components/Primitives/Rectangle/RectangleBounds";
-import { StateManager } from "../../components/StateManager";
-import { GameState } from "../../main";
+import { DataParsers, EventEmitter, TypedEventSource } from "../../utils/utils";
 
-export class Room extends StateManager<GameState> {
-    static DefaultID = "room";
-    get defaultID() {
-        return Room.DefaultID;
-    }
+type RoomEvents = Pick<
+    UserSSEEvents,
+    "join" | "leave" | "ready" | "unready" | "initCountdown" | "countdown"
+> & {
+    initData: [{ playerList: string[] }];
+    connectionLost: [];
+};
 
+export type LobbyData = {
+    ready: boolean;
+};
+
+export class Room extends EventEmitter<RoomEvents> {
     players: Set<string> = new Set();
-    eventSource?: EventSource;
-    labels: Label[] = [];
 
-    constructor(manager: ObjectManager<GameState>) {
-        super(Room.DefaultID, manager, GameState.GAME);
+    lobbyData: Map<string, LobbyData> = new Map();
+
+    private _player?: string;
+    eventSource?: TypedEventSource<UserSSEEvents>;
+
+    countdownInt = 0;
+
+    get player() {
+        if (!this._player) throw "Did not set the player yet!";
+        return this._player;
     }
 
-    moveLabels() {
-        this.labels.forEach((e, i) => {
-            e.bounds = new RectangleBounds(250, 20 + 40 * i, 0, 0);
-        });
+    get playerLobbyData() {
+        const pD = this.lobbyData.get(this.player);
+        if (!pD) throw "Could not get player's data!";
+        return pD;
     }
 
-    addPlayerLabel(pl: string) {
-        const label = new Label(`${pl}_label`, RectangleBounds.zero, pl, {
-            label: {
-                font: "3em normal Arial",
-                textColor: "red",
-            },
-        });
-        this.labels.push(label);
-        this.registerObject(label);
-        console.log("adding player", pl, "label");
-        this.moveLabels();
+    loginAs(pl: string) {
+        this._player = pl;
     }
-    removePlayerLabel(pl: string) {
-        const lb = this.labels.find((l) => l.text === pl);
-        if (lb) {
-            this.removeObject(lb);
-            this.labels = this.labels.filter((l) => l.text !== pl);
-        }
-        this.moveLabels();
-    }
-    setRoomData(pl: string[], eS: EventSource) {
-        this.players = new Set(pl);
-        this.labels = [];
+
+    setRoomData(
+        pl: Record<string, { ready: boolean }>,
+        eS: TypedEventSource<UserSSEEvents>
+    ) {
+        this.players = new Set(Object.keys(pl));
         this.eventSource = eS;
-        this.eventSource.addEventListener(
-            "join",
-            (event: MessageEvent<string>) => {
-                console.log(event);
-                const data = event.data;
-                const username = UserSSEEvents.shape.join.items[0].safeParse(
-                    JSON.parse(data)
-                );
-                console.log(username, JSON.parse(data));
-                if (username.success) {
-                    // on player joins
-                    this.playerJoined(username.data.playerid);
-                } else {
-                    console.error(data, username.error);
-                }
+        this.emit("initData", { playerList: [...this.players] });
+        [...Object.entries(pl)]
+            .filter((x) => x[1].ready)
+            .forEach((x) => {
+                this.ready(x[0]);
+            });
+        this.eventSource.onerror = () => {
+            this.emit("connectionLost");
+            alert("Server connection lost!");
+            this.eventSource?.close();
+            this.eventSource = undefined;
+            this.players = new Set();
+            this.lobbyData = new Map();
+            this._player = undefined;
+        };
+        this.eventSource.on("join", DataParsers.usernameParser, (data) => {
+            // on player joins
+            this.playerJoined(data.playerid);
+        });
+        this.eventSource.on("leave", DataParsers.usernameParser, (data) => {
+            this.playerLeft(data.playerid);
+        });
+        this.eventSource.on("ready", DataParsers.usernameParser, (data) => {
+            this.ready(data.playerid);
+        });
+        this.eventSource.on("unready", DataParsers.usernameParser, (data) => {
+            this.unready(data.playerid);
+        });
+        this.eventSource.on(
+            "initCountdown",
+            DataParsers.counterParser,
+            (data) => {
+                this.countdownInt = data.time;
+                this.emit("initCountdown", data);
             }
         );
-        this.eventSource.addEventListener(
-            "leave",
-            (event: MessageEvent<string>) => {
-                console.log(event);
-                const data = event.data;
-                const username = UserSSEEvents.shape.leave.items[0].safeParse(
-                    JSON.parse(data)
-                );
-                console.log(username, JSON.parse(data));
-                if (username.success) {
-                    // on player leaves
-                    this.playerLeft(username.data.playerid);
-                } else {
-                    console.error(data, username.error);
-                }
-            }
-        );
-        for (const [_, player] of Object.entries(pl)) {
-            this.addPlayerLabel(player);
-        }
+        this.eventSource.on("countdown", DataParsers.counterParser, (data) => {
+            this.countdownInt = data.time;
+            this.emit("countdown", data);
+        });
     }
+
     playerJoined(pl: string) {
         this.players.add(pl);
-        this.addPlayerLabel(pl);
+        if (!this.lobbyData.has(pl)) this.lobbyData.set(pl, { ready: false });
+        this.emit("join", { playerid: pl });
     }
     playerLeft(pl: string) {
         this.players.delete(pl);
-        this.removePlayerLabel(pl);
+        this.lobbyData.delete(pl);
+        this.emit("leave", { playerid: pl });
     }
-    async update(t: number): Promise<void> {}
+    ready(pl: string) {
+        this.lobbyData.set(pl, { ready: true });
+        this.emit("ready", { playerid: pl });
+    }
+    unready(pl: string) {
+        console.log("unreading", pl);
+        this.lobbyData.set(pl, { ready: false });
+        this.emit("unready", { playerid: pl });
+    }
 }

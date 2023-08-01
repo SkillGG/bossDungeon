@@ -9,9 +9,10 @@ import {
 import { Label } from "../../components/Primitives/Label/Label";
 import { RectangleBounds } from "../../components/Primitives/Rectangle/RectangleBounds";
 import { StateManager } from "../../components/StateManager";
-
-import { UserSSEEvents } from "./../../../../shared/events";
 import { Room } from "../Room/room";
+
+import { Server } from "../../utils/server";
+import { DataParsers } from "../../utils/utils";
 
 export class GameMenu extends StateManager<GameState> {
     static DefaultID = "menu";
@@ -24,10 +25,16 @@ export class GameMenu extends StateManager<GameState> {
     settingsButton: Button;
     joinRoomButton: Button;
 
+    room: Room;
+
     get defaultID() {
         return GameMenu.DefaultID;
     }
-    constructor(manager: ObjectManager<GameState>, zIndex = mMENU_Z) {
+    constructor(
+        manager: ObjectManager<GameState>,
+        room: Room,
+        zIndex = mMENU_Z
+    ) {
         super(GameMenu.DefaultID, manager, GameState.MENU);
         this.nameLabel = new Label(
             "nameLabel",
@@ -42,15 +49,20 @@ export class GameMenu extends StateManager<GameState> {
             },
             zIndex
         );
+        this.room = room;
+
+        room.on("connectionLost", () => {
+            this.eventSource?.close();
+            this.eventSource = undefined;
+        });
 
         const buttonHover: ButtonOnCalls = {
             onenter(ev) {
                 ev.target.label.border.style.fillColor = "blue";
             },
             onleave(ev) {
-                ev.target.label.border.style.fillColor =
-                    ev.target.label.initStyle.border?.fillColor ||
-                    "transparent";
+                ev.target.label.clearStyles();
+                ev.target.label.border.clearStyles();
             },
         };
 
@@ -66,9 +78,8 @@ export class GameMenu extends StateManager<GameState> {
                     }
                     const id = prompt("NICK:");
                     if (!id) return;
-                    const evS = new EventSource(
-                        `http://localhost:8080/enter/${id}`
-                    );
+                    room.loginAs(id);
+                    const evS = Server.sendRoomEnter(id);
                     this.eventSource = evS;
                     if (!this.eventSource) return;
                     this.eventSource.onerror = (err) => {
@@ -76,26 +87,11 @@ export class GameMenu extends StateManager<GameState> {
                         this.eventSource?.close();
                         this.eventSource = undefined;
                     };
-                    this.eventSource.addEventListener(
-                        "roomData",
-                        (event: MessageEvent<string>) => {
-                            console.log(event);
-                            const data = event.data;
-                            const roomData =
-                                UserSSEEvents.shape.roomData.items[0].safeParse(
-                                    JSON.parse(data)
-                                );
-                            if (roomData.success) {
-                                manager
-                                    .getStateManager<Room>(Room.DefaultID)
-                                    .setRoomData(roomData.data.playersIn, evS);
-                                manager.switchState(GameState.GAME);
-                            }
-                        }
-                    );
-                    this.eventSource.onopen = () => {
-                        console.log("opened");
-                    };
+
+                    evS.on("roomData", DataParsers.parseRoomData, (data) => {
+                        room.setRoomData(data.playersIn, evS);
+                        manager.switchState(GameState.GAME_LOBBY);
+                    });
                 },
             },
             "Join",
@@ -113,11 +109,7 @@ export class GameMenu extends StateManager<GameState> {
             new RectangleBounds(Game.WIDTH / 2 - 90, 90 + 90 * 2, 180, 65),
             {
                 ...buttonHover,
-                onclick: () => {
-                    console.log("closing event source");
-                    this.eventSource?.close();
-                    this.eventSource = undefined;
-                },
+                onclick: () => {},
             },
             "Settings",
             {
