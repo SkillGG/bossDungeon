@@ -9,10 +9,6 @@ export class UserConnection extends UserSSEConnection<UserSSEEvents> {
     static id: number = 0;
 }
 
-export class PlayerData {
-    constructor() {}
-}
-
 export class GameRoom {
     players: Map<string, UserConnection> = new Map();
     readyPlayers: Set<string> = new Set();
@@ -33,7 +29,7 @@ export class GameRoom {
 
     constructor() {}
 
-    getReadyPlayersRecord() {
+    getRoomData() {
         const ret: UserSSEEvents["roomData"][0] = { playersIn: {} };
         for (const [pl] of this.players) {
             ret.playersIn[pl] = { ready: this.readyPlayers.has(pl) };

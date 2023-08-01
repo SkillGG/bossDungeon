@@ -30,7 +30,7 @@ addSSERoute(
             return;
         }
 
-        res.sseevent("roomData", gameRoom.getReadyPlayersRecord());
+        res.sseevent("roomData", gameRoom.getRoomData());
         conn.once("close", () => {
             // close connection
             conn.close();
