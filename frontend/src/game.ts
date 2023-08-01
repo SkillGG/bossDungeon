@@ -1,5 +1,8 @@
+import { GameSettings } from "./UI";
 import { InputManager } from "./components/KeyboardManager";
 import { ObjectManager } from "./components/ObjectManager";
+import { GameMenu } from "./game/Menu/menu";
+import { Room } from "./game/Room/room";
 import { GameState } from "./main";
 import {
     Renderable,
@@ -25,42 +28,36 @@ export class Game<T extends string>
     readonly gameHeight: number = Game.HEIGHT;
     readonly gameWidth: number = Game.WIDTH;
 
-    private _playername: string | null = null;
-
-    set playername(s: string | null) {
-        if (!s) return;
-        this._playername = s;
-    }
-
-    get playername() {
-        return this._playername;
-    }
-
     static input: InputManager = new InputManager();
 
-    static instance: Game<any> | null = null;
+    static get instance(): Game<any> {
+        if (Game._instance) return Game._instance;
+        else throw "Game has not been created yet";
+    }
+
+    private static _instance: Game<any> | null = null;
 
     static getRelativeVector(v: Vector2): Vector2 {
-        if (!Game.instance) throw "No Game instance present!";
         return Game.instance.getRelativeVector(v);
     }
 
     static getNormalVector(v: Vector2): Vector2 {
-        if (!Game.instance) throw "No Game instance!";
         return Game.instance.getNormalVector(v);
     }
 
     static getWidth() {
-        return this.instance?.width || Game.WIDTH;
+        return this._instance?.width || Game.WIDTH;
     }
     static getHeight() {
-        return this.instance?.height || Game.HEIGHT;
+        return this._instance?.height || Game.HEIGHT;
     }
     static getSize(): Vector2 {
         return [Game.getWidth(), Game.getHeight()];
     }
 
-    constructor(defaultState: T) {
+    constructor(
+        defaultState: T
+    ) {
         super();
         const cC = this.getContext("2d");
         this.manager = new ObjectManager<T>(this, defaultState);
@@ -73,7 +70,7 @@ export class Game<T extends string>
         this.canvasContext = cC;
         this.width = this.gameWidth;
         this.height = this.gameHeight;
-        Game.instance = this;
+        Game._instance = this;
     }
     getComputedStyle() {
         return window.getComputedStyle(this);

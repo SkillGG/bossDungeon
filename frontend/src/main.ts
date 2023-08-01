@@ -1,12 +1,14 @@
 import { GameSettings } from "./UI";
 import { FpsCounter } from "./components/FpsCounter/fpsCounter";
-import { GameMenu } from "./components/Menu/menu";
 import { SpriteLoader } from "./components/Primitives/Sprite/SpriteLoader";
 import { Game } from "./game";
+import { GameMenu } from "./game/Menu/menu";
+import { Room } from "./game/Room/room";
 import "./style.css";
 
 export enum GameState {
     MENU = "menu",
+    GAME = "game",
 }
 
 SpriteLoader.loadAllSprites().then(() => {
@@ -36,6 +38,10 @@ SpriteLoader.loadAllSprites().then(() => {
     const menuManager = new GameMenu(game.manager);
     game.manager.addStateManager(new GameMenu(game.manager));
     menuManager.registerObjects();
+
+    const gameRoom = new Room(game.manager);
+    game.manager.addStateManager(gameRoom);
+    gameRoom.registerObjects();
 
     game.manager.addStateManager(GameSettings.manager);
     GameSettings.manager.registerObjects();

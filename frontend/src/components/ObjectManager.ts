@@ -3,7 +3,6 @@ import { Updateable, Renderable } from "../utils/utils";
 import { GameObject } from "./GameObject";
 import { StateManager } from "./StateManager";
 
-
 export class ObjectManager<AvailableStates extends string>
     implements Updateable, Renderable
 {
@@ -12,6 +11,18 @@ export class ObjectManager<AvailableStates extends string>
     stateObjects: Map<AvailableStates | "any", GameObject[]>;
     stateManagers: StateManager<any>[] = [];
     currentState: AvailableStates;
+
+    isAvailableState(s: string): s is AvailableStates {
+        return ([...this.stateObjects.keys()] as string[]).includes(s);
+    }
+
+    switchState(state: string) {
+        if (this.isAvailableState(state)) {
+            this.currentState = state;
+        } else {
+            console.error("invalid state!");
+        }
+    }
 
     constructor(g: Game<AvailableStates>, defaultState: AvailableStates) {
         this.game = g;
@@ -25,8 +36,10 @@ export class ObjectManager<AvailableStates extends string>
     addStateManager<T extends string>(om: StateManager<T>) {
         this.stateManagers.push(om);
     }
-    getStateManager<T extends StateManager<any>>(omid: string): T | null {
-        return (this.stateManagers.find((f) => f.id === omid) as T) || null;
+    getStateManager<T extends StateManager<any>>(omid: string): T {
+        const sM = this.stateManagers.find((f) => f.id === omid);
+        if (!sM) throw `${omid} is not a valid state manager id!`;
+        return sM as T;
     }
 
     removeObject(objid: string, state: AvailableStates | "any") {

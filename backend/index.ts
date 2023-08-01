@@ -1,92 +1,55 @@
-import express, { Express, Request, Response } from "express";
+import { addSSERoute, startServer } from "./server";
+import {
+    GameRoom,
+    UserConnection as RoomConnection,
+    userConnections,
+} from "./GameRoom";
+import { SSEResponse, UserSSEConnection } from "./utils";
+import { Request } from "express";
+import z from "zod";
 
-import { EventEmitter, UserSSEConnection } from "./utils";
-
-const app = express();
-
-const getLastID = () => {
-    return conns.length;
-};
-
-type UserSSEEvents = { close: []; sendData: [{ type: string }]; leave: [] };
-
-const conns: UserSSEConnection<UserSSEEvents>[] = [];
-
-const addSSERoute = (
-    route: string,
-    options: {
-        connBuilder: (req: Request) => UserSSEConnection<UserSSEEvents>;
-    },
-    sseFunction: (
-        req: Request,
-        res: Response,
-        conn: UserSSEConnection<UserSSEEvents>
-    ) => void
-) => {
-    console.log("Adding SSE Route", route);
-    app.get(route, (req, res) => {
-        const conn = options.connBuilder(req);
-        req.socket.setTimeout(0);
-        req.socket.setNoDelay(true);
-        req.socket.setKeepAlive(true);
-        res.statusCode = 200;
-        res.setHeader("Content-Type", "text/event-stream");
-        res.setHeader("Cache-Control", "no-cache");
-        res.setHeader("X-Accel-Buffering", "no");
-        res.setHeader("Access-Control-Allow-Origin", "*");
-        if (req.httpVersion !== "2.0") {
-            res.setHeader("Connection", "keep-alive");
-        }
-        console.log("Somebody requested /events");
-
-        res.on("close", () => {
-            conn.emit("close");
-        });
-
-        conn.on("sendData", (data) => {
-            if (res.closed) {
-                console.error("Connection closed!");
-                return;
-            }
-            console.log("sending data", data);
-            res.write("data: " + JSON.stringify(data) + "\n\n", (e) => {
-                if (e) console.log(e);
-            });
-        });
-
-        conns.push(conn);
-
-        sseFunction(req, res, conn);
-    });
-};
+const gameRoom = new GameRoom();
 
 addSSERoute(
-    "/events",
+    "/enter/:playerid",
     {
         connBuilder: () => {
-            const conn = new UserSSEConnection(`${getLastID()}`);
+            const conn = new RoomConnection(`${RoomConnection.freeId}`);
             console.log("creating new connection", conn.userid);
             return conn;
         },
     },
-    (req: Request, res: Response, conn: UserSSEConnection<UserSSEEvents>) => {
+    (req: Request, res: SSEResponse<RoomConnection>, conn: RoomConnection) => {
+        const enterRoomParams = z.object({ playerid: z.string() });
+        const safeParams = enterRoomParams.safeParse(req.params);
+        if (!safeParams.success) {
+            res.status(404).send("Event source link is not valid!");
+            return;
+        }
+        const { playerid } = req.params;
+
+        console.log("player joined id: ", playerid);
+
+        res.sseevent("roomData", {
+            playersIn: [...gameRoom.players].map((p) => p[0]),
+        });
+
         conn.once("close", () => {
-            // do closing action
+            // close connection
             conn.close();
-            UserSSEConnection.emitToAll(conns, (c) => !c.isClosed)("sendData", {
-                type: "leave",
-            });
+            // send to everyone that you're leaving
+            gameRoom.leave(playerid);
         });
-        conn.on("leave", () => {
-            res.write("Player left!");
+        conn.on("join", (data) => {
+            // send join event to client
+            res.sseevent("join", data);
         });
-        UserSSEConnection.emitToAll(conns, (c) => !c.isClosed)("sendData", {
-            type: "join",
+        conn.on("leave", (data) => {
+            // send leave event to client
+            res.sseevent("leave", data);
         });
-        return () => {};
+        gameRoom.join(playerid, conn);
     }
 );
 
-app.listen(8080, () => {
-    console.log("listening on http://localhost:8080");
-});
+startServer(8080);

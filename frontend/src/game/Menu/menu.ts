@@ -1,11 +1,17 @@
 import { Game } from "../../game";
 import { GameState } from "../../main";
 import { mMENU_Z } from "../../utils/zLayers";
-import { ObjectManager } from "../ObjectManager";
-import { Button, ButtonOnCalls } from "../Primitives/Button/Button";
-import { Label } from "../Primitives/Label/Label";
-import { RectangleBounds } from "../Primitives/Rectangle/RectangleBounds";
-import { StateManager } from "../StateManager";
+import { ObjectManager } from "../../components/ObjectManager";
+import {
+    Button,
+    ButtonOnCalls,
+} from "../../components/Primitives/Button/Button";
+import { Label } from "../../components/Primitives/Label/Label";
+import { RectangleBounds } from "../../components/Primitives/Rectangle/RectangleBounds";
+import { StateManager } from "../../components/StateManager";
+
+import { UserSSEEvents } from "./../../../../shared/events";
+import { Room } from "../Room/room";
 
 export class GameMenu extends StateManager<GameState> {
     static DefaultID = "menu";
@@ -58,12 +64,35 @@ export class GameMenu extends StateManager<GameState> {
                         console.error("event source already exists!");
                         return;
                     }
-                    this.eventSource = new EventSource(
-                        "http://localhost:8080/events"
+                    const id = prompt("NICK:");
+                    if (!id) return;
+                    const evS = new EventSource(
+                        `http://localhost:8080/enter/${id}`
                     );
-                    this.eventSource.onmessage = () => {
-                        console.log("message");
+                    this.eventSource = evS;
+                    if (!this.eventSource) return;
+                    this.eventSource.onerror = (err) => {
+                        console.log(err);
+                        this.eventSource?.close();
+                        this.eventSource = undefined;
                     };
+                    this.eventSource.addEventListener(
+                        "roomData",
+                        (event: MessageEvent<string>) => {
+                            console.log(event);
+                            const data = event.data;
+                            const roomData =
+                                UserSSEEvents.shape.roomData.items[0].safeParse(
+                                    JSON.parse(data)
+                                );
+                            if (roomData.success) {
+                                manager
+                                    .getStateManager<Room>(Room.DefaultID)
+                                    .setRoomData(roomData.data.playersIn, evS);
+                                manager.switchState(GameState.GAME);
+                            }
+                        }
+                    );
                     this.eventSource.onopen = () => {
                         console.log("opened");
                     };

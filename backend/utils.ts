@@ -1,3 +1,5 @@
+import { Response } from "express";
+
 type Listener<T extends any[]> = (...args: T) => void;
 
 export class EventEmitter<EventMap extends Record<string, any[]>> {
@@ -74,5 +76,47 @@ export class UserSSEConnection<
                 em.emit(id, ...data);
             });
         };
+    }
+}
+
+export type ConnectionGeneric<C extends UserSSEConnection<any>> =
+    C extends UserSSEConnection<infer T> ? T : unknown;
+
+export class SSEResponse<T extends UserSSEConnection<Record<string, any[]>>> {
+    res: Response;
+    constructor(r: Response) {
+        this.res = r;
+    }
+
+    sseevent<K extends keyof ConnectionGeneric<T> & string>(
+        id: K,
+        ...data: ConnectionGeneric<T>[K]
+    ) {
+        console.log(`event: ${id}`);
+        this.res.write(`event: ${id}\n`);
+        this.ssedata(...data);
+        return this;
+    }
+
+    ssedata<K extends keyof ConnectionGeneric<T>>(
+        ...data: string[] | ConnectionGeneric<T>[K]
+    ) {
+        for (const d of data) {
+            const dt = JSON.stringify(d);
+            console.log(`data: ${dt}`);
+            this.res.write(`data: ${dt}\n`);
+        }
+        this.res.write(`\n`);
+        return this;
+    }
+
+    status(code: number) {
+        this.res.status(code);
+        return this;
+    }
+
+    send(data?: any) {
+        this.res.send(data);
+        return this;
     }
 }
