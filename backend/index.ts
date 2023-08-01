@@ -7,7 +7,7 @@ import {
 import { SSEResponse, UserSSEConnection } from "./utils";
 import { Request } from "express";
 import z from "zod";
-import { UserSSEEvents } from "../shared/events";
+import { UserSSEEvents, playerIDShape } from "../shared/events";
 
 const gameRoom = new GameRoom();
 
@@ -21,8 +21,7 @@ addSSERoute(
         method: "get",
     },
     (req: Request, res: SSEResponse<RoomConnection>, conn: RoomConnection) => {
-        const enterRoomParams = z.object({ playerid: z.string() });
-        const safeParams = enterRoomParams.safeParse(req.params);
+        const safeParams = playerIDShape.safeParse(req.params);
         if (!safeParams.success) {
             res.status(404).send("Room link is not valid!");
             return;
