@@ -17,6 +17,9 @@ addSSERoute(
         method: "get",
     },
     (req: Request, res: SSEResponse<RoomConnection>, conn: RoomConnection) => {
+        // res is hermes => client messenger ("hermes")
+        // conn is hermes <=> room
+
         const safeParams = playerIDShape.safeParse(req.params);
         if (!safeParams.success) {
             res.status(404).send("Room link is not valid!");
@@ -28,7 +31,6 @@ addSSERoute(
             res.status(400).send("Player already exists!");
             return;
         }
-
         res.sseevent("roomData", gameRoom.getRoomData());
         conn.once("close", () => {
             // close connection
@@ -60,6 +62,7 @@ addSSERoute(
             res.sseevent("countdown", data);
         });
         conn.on("gameStart", () => res.sseevent("gameStart"));
+        conn.on("terminateCountdown", () => res.sseevent("terminateCountdown"));
         // send to everyone that player is joining
         gameRoom.join(playerid, conn);
     }

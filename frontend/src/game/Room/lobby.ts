@@ -59,15 +59,16 @@ export class RoomLobby extends StateManager<GameState> {
             }
         });
         room.on("initCountdown", ({ time }) => {
-            console.log("starting countdown!", time);
-            this.readyButton.hide();
+            // this.readyButton.hide();
             this.countdownLabel.show();
             this.countdownLabel.text = `${time}`;
-            for (const l of this.labels) l.hide();
+            // for (const l of this.labels) l.hide();
         });
         room.on("countdown", ({ time }) => {
-            console.log("countdown progression", time);
             this.countdownLabel.text = `${time}`;
+        });
+        room.on("terminateCountdown", ()=>{
+            this.countdownLabel.hide();
         });
         room.on("gameStart", () => {
             this.manager.switchState(GameState.GAME_BOARD);

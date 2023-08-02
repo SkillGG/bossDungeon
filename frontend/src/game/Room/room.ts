@@ -35,7 +35,7 @@ export class Room extends EventEmitter<RoomEvents> {
         this._player = pl;
     }
 
-    gameStart(){
+    gameStart() {
         this.emit("gameStart");
     }
 
@@ -73,10 +73,9 @@ export class Room extends EventEmitter<RoomEvents> {
         this.eventSource.on("unready", DataParsers.usernameParser, (data) => {
             this.unready(data.playerid);
         });
-        this.eventSource.on("gameStart", DataParsers.noop, ()=>{
+        this.eventSource.on("gameStart", DataParsers.noop, () => {
             this.gameStart();
         });
-        this.eventSource.debug = true;
         this.eventSource.on(
             "initCountdown",
             DataParsers.counterParser,
@@ -89,6 +88,9 @@ export class Room extends EventEmitter<RoomEvents> {
         this.eventSource.on("countdown", DataParsers.counterParser, (data) => {
             this.countdownInt = data.time;
             this.emit("countdown", data);
+        });
+        this.eventSource.on("terminateCountdown", DataParsers.noop, () => {
+            this.emit("terminateCountdown");
         });
     }
 

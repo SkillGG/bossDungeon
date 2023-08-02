@@ -62,6 +62,13 @@ export class GameRoom {
         }, 1000);
     }
 
+    terminateCountdown() {
+        if (!this.countdownTimer) return;
+        clearInterval(this.countdownTimer);
+        this.countdownTimer = undefined;
+        UserConnection.emitToAll(this.openConnections)("terminateCountdown");
+    }
+
     join(playerid: string, c: UserConnection) {
         this.players.set(playerid, c);
         UserConnection.emitToAll(this.openConnections)("join", {
@@ -75,6 +82,9 @@ export class GameRoom {
         UserConnection.emitToAll(this.openConnections)("leave", {
             playerid,
         });
+        if (this.countdownTimer) {
+            this.terminateCountdown();
+        }
     }
 
     get allPlayersReady() {
@@ -96,5 +106,8 @@ export class GameRoom {
     markUnready(playerid: string) {
         this.readyPlayers.delete(playerid);
         UserConnection.emitToAll(this.openConnections)("unready", { playerid });
+        if (this.countdownTimer) {
+            this.terminateCountdown();
+        }
     }
 }
