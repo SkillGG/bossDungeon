@@ -42,15 +42,23 @@ export class GameRoom {
     }
 
     startCountdown() {
+        if (this.countdownTimer) return;
         let ctd = 5;
         UserConnection.emitToAll(this.openConnections)("initCountdown", {
             time: ctd,
         });
         this.countdownTimer = setInterval(() => {
+            if (!this.countdownTimer) return;
             ctd--;
             UserConnection.emitToAll(this.openConnections)("countdown", {
                 time: ctd,
             });
+            if (ctd <= 0) {
+                clearInterval(this.countdownTimer);
+                this.countdownTimer = undefined;
+                console.log("The end of the timer!");
+                UserConnection.emitToAll(this.openConnections)("gameStart");
+            }
         }, 1000);
     }
 

@@ -17,8 +17,6 @@ import { DataParsers } from "../../utils/utils";
 export class GameMenu extends StateManager<GameState> {
     static DefaultID = "menu";
 
-    mapSize = 10;
-
     eventSource?: EventSource;
 
     nameLabel: Label;
@@ -51,14 +49,10 @@ export class GameMenu extends StateManager<GameState> {
         );
         this.room = room;
 
-        room.on("connectionLost", () => {
-            this.eventSource?.close();
-            this.eventSource = undefined;
-        });
-
         const buttonHover: ButtonOnCalls = {
             onenter(ev) {
                 ev.target.label.border.style.fillColor = "blue";
+                // ev.target.label.
             },
             onleave(ev) {
                 ev.target.label.clearStyles();
@@ -73,15 +67,15 @@ export class GameMenu extends StateManager<GameState> {
                 ...buttonHover,
                 onclick: () => {
                     if (this.eventSource) {
-                        console.error("event source already exists!");
+                        console.error("Connection already exists!");
                         return;
                     }
                     const id = prompt("NICK:");
                     if (!id) return;
-                    room.loginAs(id);
                     const evS = Server.sendRoomEnter(id);
                     this.eventSource = evS;
                     if (!this.eventSource) return;
+                    room.loginAs(id);
                     this.eventSource.onerror = (err) => {
                         console.log(err);
                         this.eventSource?.close();
@@ -121,12 +115,10 @@ export class GameMenu extends StateManager<GameState> {
             zIndex
         );
         this.add(this.nameLabel, this.joinRoomButton, this.settingsButton);
-    }
-    removeObjects(): void {
-        super.removeObjects();
-    }
-    registerObjects(): void {
-        super.registerObjects();
+        room.on("connectionLost", () => {
+            this.eventSource?.close();
+            this.eventSource = undefined;
+        });
     }
     async update() {}
 }

@@ -1,10 +1,7 @@
 import { UserSSEEvents } from "../../../../shared/events";
 import { DataParsers, EventEmitter, TypedEventSource } from "../../utils/utils";
 
-type RoomEvents = Pick<
-    UserSSEEvents,
-    "join" | "leave" | "ready" | "unready" | "initCountdown" | "countdown"
-> & {
+type RoomEvents = Omit<UserSSEEvents, "close"> & {
     initData: [{ playerList: string[] }];
     connectionLost: [];
 };
@@ -36,6 +33,10 @@ export class Room extends EventEmitter<RoomEvents> {
 
     loginAs(pl: string) {
         this._player = pl;
+    }
+
+    gameStart(){
+        this.emit("gameStart");
     }
 
     setRoomData(
@@ -72,10 +73,15 @@ export class Room extends EventEmitter<RoomEvents> {
         this.eventSource.on("unready", DataParsers.usernameParser, (data) => {
             this.unready(data.playerid);
         });
+        this.eventSource.on("gameStart", DataParsers.noop, ()=>{
+            this.gameStart();
+        });
+        this.eventSource.debug = true;
         this.eventSource.on(
             "initCountdown",
             DataParsers.counterParser,
             (data) => {
+                console.log("got initCountdown");
                 this.countdownInt = data.time;
                 this.emit("initCountdown", data);
             }
@@ -101,7 +107,6 @@ export class Room extends EventEmitter<RoomEvents> {
         this.emit("ready", { playerid: pl });
     }
     unready(pl: string) {
-        console.log("unreading", pl);
         this.lobbyData.set(pl, { ready: false });
         this.emit("unready", { playerid: pl });
     }

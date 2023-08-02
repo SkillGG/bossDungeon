@@ -1,12 +1,7 @@
 import { addRoute, addSSERoute, startServer } from "./server";
-import {
-    GameRoom,
-    UserConnection as RoomConnection,
-    UserConnection,
-} from "./GameRoom";
-import { SSEResponse } from "./utils";
+import { GameRoom, UserConnection as RoomConnection } from "./GameRoom";
+import { SSEResponse, UserSSEConnection } from "./utils";
 import { Request } from "express";
-import z from "zod";
 import { playerIDShape } from "../shared/events";
 
 const gameRoom = new GameRoom();
@@ -14,7 +9,11 @@ const gameRoom = new GameRoom();
 addSSERoute(
     "/enter/:playerid",
     {
-        connBuilder: () => new RoomConnection(`${++RoomConnection.id}`),
+        connBuilder: (req) => {
+            const connection = new RoomConnection(`${++RoomConnection.id}`);
+            connection.prefix = req.params.playerid || `${RoomConnection.id}`;
+            return connection;
+        },
         method: "get",
     },
     (req: Request, res: SSEResponse<RoomConnection>, conn: RoomConnection) => {
@@ -54,6 +53,13 @@ addSSERoute(
             // send ready event to client
             res.sseevent("unready", data);
         });
+        conn.on("initCountdown", (data) => {
+            res.sseevent("initCountdown", data);
+        });
+        conn.on("countdown", (data) => {
+            res.sseevent("countdown", data);
+        });
+        conn.on("gameStart", () => res.sseevent("gameStart"));
         // send to everyone that player is joining
         gameRoom.join(playerid, conn);
     }

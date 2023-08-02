@@ -5,7 +5,7 @@ type Listener<T extends any[]> = (...args: T) => void;
 export class EventEmitter<EventMap extends Record<string, any[]>> {
     private listeners: { [K in keyof EventMap]?: Set<Listener<EventMap[K]>> } =
         {};
-    protected prefix: string | null = null;
+    prefix: string | null = null;
     on<T extends keyof EventMap & string>(
         id: T,
         listener: (...data: EventMap[T]) => void
@@ -34,7 +34,7 @@ export class EventEmitter<EventMap extends Record<string, any[]>> {
             list(...data);
         }
         if (this.prefix)
-            console.log(`emitted ${id} in ${this.prefix} with`, data);
+            console.log(`emitted ${id}(`, data, `) to ${this.prefix}`);
     }
     removeAllEventListeners() {
         this.listeners = {};
@@ -93,7 +93,8 @@ export class SSEResponse<T extends UserSSEConnection<Record<string, any[]>>> {
         ...data: ConnectionGeneric<T>[K]
     ) {
         this.res.write(`event: ${id}\n`);
-        this.ssedata(...data);
+        if (data.length > 0) this.ssedata(...data);
+        else this.ssedata("");
         return this;
     }
 

@@ -1,6 +1,9 @@
 import { GameSettings } from "./UI";
 import { FpsCounter } from "./components/FpsCounter/fpsCounter";
+import { Sprite } from "./components/Primitives/Sprite/Sprite";
 import { SpriteLoader } from "./components/Primitives/Sprite/SpriteLoader";
+import { LoadedTexture } from "./components/Primitives/Texture/loadedTexture";
+import { Texture } from "./components/Primitives/Texture/texture";
 import { Game } from "./game";
 import { GameMenu } from "./game/Menu/menu";
 import { RoomBoard } from "./game/Room/board";
@@ -26,15 +29,15 @@ window.room = room;
 SpriteLoader.loadAllSprites().then(() => {
     const gameBox = document.querySelector("#board_container");
 
-    const ui = new GameSettings<GameState>();
-
     if (!gameBox) throw new Error("Could not find the boxes!");
+    
+    const settings = new GameSettings<GameState>();
 
     const game = (window.game = new Game<GameState>(GameState.MENU));
 
     gameBox.append(game);
 
-    ui.createManager(game.manager);
+    settings.createManager(game.manager);
 
     /**
      * Register all GameStates
