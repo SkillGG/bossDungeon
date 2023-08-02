@@ -1,4 +1,4 @@
-import { Hideable } from "../../../utils/utils";
+import { Hideable, Styled } from "../../../utils/utils";
 import { BoundedGameObject } from "../../GameObject";
 import { RectangleBounds } from "./RectangleBounds";
 
@@ -16,8 +16,15 @@ export const RectangleDefaultStyle: RRectangleStyle = {
     radii: [0, 0, 0, 0],
 };
 
-export class RRectangle extends BoundedGameObject implements Hideable {
+export class RRectangle
+    extends BoundedGameObject
+    implements Hideable, Styled<RRectangleStyle>
+{
     style: RRectangleStyle;
+    initStyles: RRectangleStyle;
+    clearStyles(): void {
+        this.style = { ...this.initStyles };
+    }
     constructor(
         id: string,
         bounds: RectangleBounds,
@@ -26,6 +33,7 @@ export class RRectangle extends BoundedGameObject implements Hideable {
     ) {
         super(id, bounds, zIndex);
         this.style = { ...RectangleDefaultStyle, ...style };
+        this.initStyles = { ...this.style };
     }
     #hidden = false;
     hide(): void {

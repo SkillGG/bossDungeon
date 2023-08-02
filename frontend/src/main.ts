@@ -1,28 +1,43 @@
 import { GameSettings } from "./UI";
 import { FpsCounter } from "./components/FpsCounter/fpsCounter";
-import { GameMenu } from "./components/Menu/menu";
-import { Rectangle } from "./components/Primitives/Rectangle/Rectangle";
-import { RectangleBounds } from "./components/Primitives/Rectangle/RectangleBounds";
+import { Sprite } from "./components/Primitives/Sprite/Sprite";
 import { SpriteLoader } from "./components/Primitives/Sprite/SpriteLoader";
+import { LoadedTexture } from "./components/Primitives/Texture/loadedTexture";
+import { Texture } from "./components/Primitives/Texture/texture";
 import { Game } from "./game";
+import { GameMenu } from "./game/Menu/menu";
+import { RoomBoard } from "./game/Room/board";
+import { RoomLobby } from "./game/Room/lobby";
+import { Room } from "./game/Room/room";
 import "./style.css";
 
 export enum GameState {
     MENU = "menu",
+    GAME_LOBBY = "lobby",
+    GAME_BOARD = "gameboard",
 }
+const room = new Room();
+
+declare global {
+    interface Window {
+        room: Room;
+    }
+}
+
+window.room = room;
 
 SpriteLoader.loadAllSprites().then(() => {
     const gameBox = document.querySelector("#board_container");
 
-    const ui = new GameSettings<GameState>();
-
     if (!gameBox) throw new Error("Could not find the boxes!");
+    
+    const settings = new GameSettings<GameState>();
 
     const game = (window.game = new Game<GameState>(GameState.MENU));
 
     gameBox.append(game);
 
-    ui.createManager(game.manager);
+    settings.createManager(game.manager);
 
     /**
      * Register all GameStates
@@ -35,9 +50,17 @@ SpriteLoader.loadAllSprites().then(() => {
     const fpsCounter = new FpsCounter([10, 15], Game.VERSION);
     game.manager.addObject(fpsCounter, "any");
 
-    const menuManager = new GameMenu(game.manager);
-    game.manager.addStateManager(new GameMenu(game.manager));
+    const menuManager = new GameMenu(game.manager, room);
+    game.manager.addStateManager(menuManager);
     menuManager.registerObjects();
+
+    const gameRoom = new RoomLobby(game.manager, room);
+    game.manager.addStateManager(gameRoom);
+    gameRoom.registerObjects();
+
+    const gameBoard = new RoomBoard(game.manager, room);
+    game.manager.addStateManager(gameBoard);
+    gameBoard.registerObjects();
 
     game.manager.addStateManager(GameSettings.manager);
     GameSettings.manager.registerObjects();

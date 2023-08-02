@@ -1,5 +1,11 @@
 // #region Math
 
+import {
+    playerIDShape,
+    roomDataShape,
+    timerShape,
+} from "../../../shared/events";
+
 export type Vector2 = [number, number];
 export type Vector3 = [number, number, number];
 export type Vector4 = [number, number, number, number];
@@ -266,6 +272,12 @@ export interface Hideable {
     show(): void;
 }
 
+export interface Styled<T extends object> {
+    style: T;
+    initStyles: T;
+    clearStyles(): void;
+}
+
 // #endregion Game interfaces
 
 // #region
@@ -274,3 +286,100 @@ export const noop: (...a: any[]) => any = () => {};
 export const asyncNoop: (...a: any[]) => Promise<any> = async () => {};
 
 //#endregion
+
+type Listener<T extends any[]> = (...args: T) => void;
+
+export class EventEmitter<EventMap extends Record<string, any[]>> {
+    private listeners: { [K in keyof EventMap]?: Set<Listener<EventMap[K]>> } =
+        {};
+    protected prefix: string | null = null;
+    on<T extends keyof EventMap & string>(
+        id: T,
+        listener: (...data: EventMap[T]) => void
+    ) {
+        const listeners = this.listeners[id] ?? new Set();
+        listeners.add(listener);
+        this.listeners[id] = listeners;
+        if (this.prefix) console.log(`adding on ${id} to ${this.prefix}`);
+    }
+    once<T extends keyof EventMap & string>(
+        id: T,
+        listener: (...data: EventMap[T]) => void
+    ) {
+        const listeners = this.listeners[id] ?? new Set();
+        const wrapper = (...data: EventMap[T]) => {
+            listeners.delete(wrapper);
+            listener(...data);
+        };
+        listeners.add(wrapper);
+        this.listeners[id] = listeners;
+        if (this.prefix) console.log(`adding once ${id} in ${this.prefix}`);
+    }
+    emit<T extends keyof EventMap & string>(id: T, ...data: EventMap[T]) {
+        const listeners = this.listeners[id] ?? new Set();
+        for (const list of listeners) {
+            list(...data);
+        }
+        if (this.prefix)
+            console.log(`got emitted ${id} in ${this.prefix} with ${data}`);
+    }
+    removeAllEventListeners() {
+        this.listeners = {};
+    }
+    static emitToAll<T extends Record<string, any[]>>(
+        arr: EventEmitter<T>[],
+        except: (ev: EventEmitter<T>) => boolean = () => true
+    ) {
+        return <K extends keyof T & string>(id: K, ...data: T[K]) => {
+            arr.filter((e) => except(e)).forEach((em) => {
+                em.emit(id, ...data);
+            });
+        };
+    }
+}
+
+export class TypedEventSource<
+    T extends Record<string, readonly any[]>
+> extends EventSource {
+    debug = false;
+    on<K extends keyof T>(
+        type: K & string,
+        parser: (s: string) => T[K] | null,
+        fn: (...d: T[K]) => void
+    ) {
+        if (this.debug) console.log("adding ES listener", type);
+        this.addEventListener(type, (ev: MessageEvent<string>) => {
+            if (this.debug) console.log("Got event", type, "with", ev);
+            const d = parser(ev.data);
+            if (d) fn(...d);
+        });
+    }
+}
+export namespace DataParsers {
+    export const parseRoomData = <K>(s: string) => {
+        const data = roomDataShape.safeParse(
+            JSON.parse(s)
+        );
+        if (data.success) {
+            return [data.data] as K;
+        } else {
+            throw data.error;
+        }
+    };
+    export const usernameParser = <K>(s: string) => {
+        const username = playerIDShape.safeParse(JSON.parse(s));
+        if (username.success) {
+            return [username.data] as K;
+        } else {
+            return null;
+        }
+    };
+    export const counterParser = <K>(s: string) => {
+        const timer = timerShape.safeParse(JSON.parse(s));
+        if (timer.success) return [timer.data] as K;
+        else return null;
+    };
+    export const noop = <K>() => {
+        return [] as K;
+    };
+}
