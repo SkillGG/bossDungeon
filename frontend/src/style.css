@@ -3,7 +3,7 @@
 }
 
 nav {
-  z-index: 1;
+    z-index: 1;
 }
 
 body {
@@ -22,11 +22,19 @@ body {
     left: 0;
     width: 100vw;
     height: 100vh;
-    align-items: center;
-    margin: auto;
 }
 
 #board {
     align-self: center;
     justify-self: center;
+    width: 100%;
+    height: 100%;
+    max-width: 1200px;
+    max-height: 800px;
+}
+
+@media only screen and (max-width: 1199px) {
+    #board {
+        align-self: unset;
+    }
 }

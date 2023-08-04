@@ -24,19 +24,21 @@ export class GameCard extends BoundedGameObject {
                 },
             }
         );
-        const lifePadding = 10;
+        const lifePadding = 5;
         this.lifeLabel = new Label(
             `card_${card.id}_life`,
             new RectangleBounds(
-                x + w - lifePadding * 2,
-                y + h - lifePadding * 2,
-                lifePadding * 2,
-                lifePadding * 2
+                x + lifePadding,
+                y + lifePadding,
+                w - lifePadding * 2,
+                h - lifePadding * 2
             ),
             `${card.life}`,
             {
                 label: {
-                    font: "1em normal Arial",
+                    font: "1.1em normal Arial",
+                    halign: "right",
+                    valign: "bottom",
                 },
                 border: {
                     strokeColor: "transparent",
