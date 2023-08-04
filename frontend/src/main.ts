@@ -1,9 +1,6 @@
 import { GameSettings } from "./UI";
 import { FpsCounter } from "./components/FpsCounter/fpsCounter";
-import { Sprite } from "./components/Primitives/Sprite/Sprite";
 import { SpriteLoader } from "./components/Primitives/Sprite/SpriteLoader";
-import { LoadedTexture } from "./components/Primitives/Texture/loadedTexture";
-import { Texture } from "./components/Primitives/Texture/texture";
 import { Game } from "./game";
 import { GameMenu } from "./game/Menu/menu";
 import { RoomBoard } from "./game/Room/board";
