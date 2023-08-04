@@ -1,10 +1,11 @@
 import { ObjectManager } from "../../components/ObjectManager";
 import { Button } from "../../components/Primitives/Button/Button";
+import { Counter } from "../../components/Primitives/Counter/Counter";
 import { Label } from "../../components/Primitives/Label/Label";
 import { RectangleBounds } from "../../components/Primitives/Rectangle/RectangleBounds";
 import { StateManager } from "../../components/StateManager";
 import { Game } from "../../game";
-import { GameState } from "../../main";
+import { GameState, theme } from "../../main";
 import { Server } from "../../utils/server";
 import { RoomBoard } from "./board";
 import { Room } from "./room";
@@ -18,7 +19,7 @@ export class RoomLobby extends StateManager<GameState> {
 
     labels: Label[] = [];
 
-    countdownLabel: Label;
+    countdownLabel: Counter;
 
     readyButton: Button;
 
@@ -47,8 +48,20 @@ export class RoomLobby extends StateManager<GameState> {
             if (pLabel) pLabel.style.textColor = "green";
             if (playerid === room.player) {
                 console.log("Making button green bc", playerid, " readied");
-                this.readyButton.label.border.style.fillColor = "green";
-                this.readyButton.label.style.textColor = "black";
+                this.readyButton.label.border.style.fillGradient = (
+                    ctx,
+                    { x, y, width: w, height: h }
+                ) => {
+                    const gradient = ctx.createLinearGradient(
+                        x + w / 2,
+                        y,
+                        x + w / 2,
+                        y + h
+                    );
+                    gradient.addColorStop(0, "#21fc00");
+                    gradient.addColorStop(0.5, "#00fc5c");
+                    return gradient;
+                };
             }
         });
         room.on("unready", ({ playerid }) => {
@@ -61,14 +74,15 @@ export class RoomLobby extends StateManager<GameState> {
                 this.readyButton.label.border.clearStyles();
             }
         });
-        room.on("initCountdown", ({ time, type }) => {
+        room.on("initCountdown", ({ time, type, ms }) => {
             if (type === "gameLaunch") {
                 this.countdownLabel.show();
-                this.countdownLabel.text = `${time}`;
+                this.countdownLabel.initCounter(time, ms);
+                this.countdownLabel.updateTime(time);
             }
         });
         room.on("countdown", ({ time, type }) => {
-            if (type === "gameLaunch") this.countdownLabel.text = `${time}`;
+            if (type === "gameLaunch") this.countdownLabel.updateTime(time);
         });
         room.on("terminateCountdown", () => {
             this.countdownLabel.hide();
@@ -102,22 +116,44 @@ export class RoomLobby extends StateManager<GameState> {
             {
                 border: {
                     radii: [10, 10, 10, 10],
+                    fillGradient: (ctx, { x, y, width: w, height: h }) => {
+                        const gradient = ctx.createLinearGradient(
+                            x + w / 2,
+                            y,
+                            x + w / 2,
+                            y + h
+                        );
+                        gradient.addColorStop(0, "#fc002e");
+                        gradient.addColorStop(0.5, "#fc4f00");
+                        return gradient;
+                    },
                 },
                 rounded: true,
                 label: {
-                    textColor: "#ccce",
+                    textColor: theme.textColor,
                     font: "1.5em normal Arial",
                 },
             }
         );
-        this.countdownLabel = new Label(
-            "countdownLabel",
-            new RectangleBounds(0, 400, Game.WIDTH, 0),
-            ``,
+        const countdownLabelSize = 80;
+        this.countdownLabel = new Counter(
+            "lobbyCountdownCounter",
+            new RectangleBounds(
+                Game.WIDTH / 2 - countdownLabelSize / 2,
+                Game.HEIGHT / 2 - countdownLabelSize / 2,
+                countdownLabelSize,
+                countdownLabelSize
+            ),
             {
-                label: {
-                    font: "2em normal Arial",
+                style: {
+                    arcColor: "#538ffb",
+                    label: {
+                        font: "2em normal Arial",
+                        textColor: theme.textColor,
+                    },
                 },
+                currTime: 0,
+                interval: 0,
             }
         );
         this.countdownLabel.hide();

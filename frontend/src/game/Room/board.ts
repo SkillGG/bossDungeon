@@ -1,11 +1,11 @@
-import { Card } from "../../../../shared/card";
+import { BossCard, Card } from "../../../../shared/Cards/card";
 import { ObjectManager } from "../../components/ObjectManager";
 import { Label } from "../../components/Primitives/Label/Label";
 import { RectangleBounds } from "../../components/Primitives/Rectangle/RectangleBounds";
 import { StateManager } from "../../components/StateManager";
 import { Game } from "../../game";
-import { GameState } from "../../main";
-import { GameCard } from "./card";
+import { GameState, theme } from "../../main";
+import { BossGameCard } from "./card";
 import { Room } from "./room";
 
 export class RoomBoard extends StateManager<GameState> {
@@ -16,9 +16,9 @@ export class RoomBoard extends StateManager<GameState> {
 
     room: Room;
 
-    boss?: Card;
+    boss?: BossCard;
 
-    bossCard?: GameCard;
+    bossCard?: BossGameCard;
 
     pickBossTimer: Label;
 
@@ -31,7 +31,10 @@ export class RoomBoard extends StateManager<GameState> {
             new RectangleBounds(0, 15, Game.WIDTH, 0),
             "",
             {
-                label: { font: "1.5em normal Arial" },
+                label: {
+                    font: "1.5em normal Arial",
+                    textColor: theme.textColor,
+                },
             }
         );
 
@@ -58,7 +61,10 @@ export class RoomBoard extends StateManager<GameState> {
 
         this.room.on("endCountdown", ({ data }) => {
             if (data.type === "pickBoss") {
-                this.bossPicked(Card.fromString(data.boss.cardStr));
+                console.log("got boss", data.boss.cardStr);
+                const card = Card.fromString(data.boss.cardStr);
+                if (card.type !== "boss") return;
+                this.bossPicked(card);
             }
         });
     }
@@ -72,9 +78,9 @@ export class RoomBoard extends StateManager<GameState> {
         this.pickBossTimer.text = `Picking boss: ${time}`;
     }
 
-    bossPicked(boss: Card) {
+    bossPicked(boss: BossCard) {
         this.boss = boss;
-        this.bossCard = new GameCard(
+        this.bossCard = new BossGameCard(
             boss,
             new RectangleBounds(100, 100, 200, 100)
         );

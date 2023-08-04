@@ -1,7 +1,6 @@
-
 import { InputManager } from "./components/KeyboardManager";
 import { ObjectManager } from "./components/ObjectManager";
-import { GameState } from "./main";
+import { GameState, theme } from "./main";
 import {
     Renderable,
     Updateable,
@@ -53,9 +52,7 @@ export class Game<T extends string>
         return [Game.getWidth(), Game.getHeight()];
     }
 
-    constructor(
-        defaultState: T
-    ) {
+    constructor(defaultState: T) {
         super();
         const cC = this.getContext("2d");
         this.manager = new ObjectManager<T>(this, defaultState);
@@ -68,6 +65,8 @@ export class Game<T extends string>
         this.canvasContext = cC;
         this.width = this.gameWidth;
         this.height = this.gameHeight;
+        document.body.style.backgroundColor = theme.bgColor;
+        this.style.backgroundColor = theme.bgColor;
         Game._instance = this;
     }
     getComputedStyle() {

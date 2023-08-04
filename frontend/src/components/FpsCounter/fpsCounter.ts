@@ -1,3 +1,4 @@
+import { theme } from "../../main";
 import { Vector2, getTextMeasuresWithFont } from "../../utils/utils";
 import { oFPS_Z } from "../../utils/zLayers";
 import { GameObject } from "../GameObject";
@@ -12,13 +13,15 @@ export class FpsCounter extends GameObject {
         this.fps = new Label("fpsLabel", new RectangleBounds(pos, [0, 0]), "", {
             label: {
                 valign: "top",
+                textColor: theme.textColor,
             },
         });
         this.fps.style.font = font || "normal 1em auto";
         this.version = new Label(
             "versionlabel",
             new RectangleBounds(pos, [0, 0]),
-            version
+            version,
+            { label: { textColor: theme.textColor } }
         );
         this.version.style.font = font || "normal 1em auto";
         this.version.style.valign = "top";

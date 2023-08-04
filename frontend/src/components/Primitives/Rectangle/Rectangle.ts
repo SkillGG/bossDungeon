@@ -4,8 +4,16 @@ import { RectangleBounds } from "./RectangleBounds";
 
 export interface RectangleStyle {
     fillColor: string;
+    fillGradient?: CanvasGradient;
+    strokeGradient?: CanvasGradient;
     strokeColor: string;
     strokeWidth: number;
+    shadow?: {
+        color: string;
+        blur: number;
+        offsetX?: number;
+        offsetY?: number;
+    };
 }
 
 export const RectangleDefaultStyle: RectangleStyle = {
@@ -44,8 +52,9 @@ export class Rectangle
     async render(ctx: CanvasRenderingContext2D) {
         if (this.#hidden) return;
         if (this.bounds.width * this.bounds.height === 0) return;
-        ctx.fillStyle = this.style.fillColor;
-        ctx.strokeStyle = this.style.strokeColor;
+        ctx.beginPath();
+        ctx.fillStyle = this.style.fillGradient ?? this.style.fillColor;
+        ctx.strokeStyle = this.style.strokeGradient ?? this.style.strokeColor;
         ctx.lineWidth = this.style.strokeWidth;
         ctx.rect(
             this.bounds.x,
@@ -53,8 +62,20 @@ export class Rectangle
             this.bounds.width,
             this.bounds.height
         );
+        if (this.style.shadow) {
+            console.log("shadow from", this.id);
+            ctx.shadowBlur = this.style.shadow.blur;
+            ctx.shadowColor = this.style.shadow.color;
+            if (this.style.shadow.offsetX) {
+                ctx.shadowOffsetX = this.style.shadow.offsetX;
+            }
+            if (this.style.shadow.offsetY) {
+                ctx.shadowOffsetY = this.style.shadow.offsetY;
+            }
+        }
         ctx.fill();
         ctx.stroke();
+        ctx.closePath();
     }
     intersects(bounds: RectangleBounds) {
         if (this.#hidden) return;

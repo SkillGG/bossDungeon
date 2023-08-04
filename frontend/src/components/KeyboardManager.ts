@@ -10,6 +10,8 @@ export class InputManager implements Updateable {
     keysPressed: Set<string>;
     pointerButtonsPressed: Set<number>;
     pointerButtonsClicked: Set<number>;
+    pointerButtonsReleasedThisUpdate: Set<number>;
+    pointerButtonsPressedThisUpdate: Set<number>;
     pointerStateChanged = false;
     allowedKeys: Set<string>;
     _prevMousePostiion: Vector2;
@@ -40,9 +42,11 @@ export class InputManager implements Updateable {
         window.onpointermove = this.handlePointerMove.bind(this);
         window.onresize = this.handleResize.bind(this);
         this.keysPressed = new Set();
-        this.allowedKeys = new Set(["F12", "F5"]);
+        this.allowedKeys = new Set(["F12", "F5", "F11"]);
         this.pointerButtonsPressed = new Set();
         this.pointerButtonsClicked = new Set();
+        this.pointerButtonsReleasedThisUpdate = new Set();
+        this.pointerButtonsPressedThisUpdate = new Set();
         this.pointerStateChanged = false;
         this._mousePosition = [0, 0];
         this._prevMousePostiion = [0, 0];
@@ -86,6 +90,12 @@ export class InputManager implements Updateable {
             this.pointerStateChanged &&
             this.pointerButtonsPressed.size > 0
         );
+    }
+    hasReleasedMouseButton(k: number) {
+        return !!this.pointerButtonsReleasedThisUpdate.has(k);
+    }
+    hasPressedMouseButton(k: number) {
+        return !!this.pointerButtonsPressedThisUpdate.has(k);
     }
     isPressed(code: string) {
         return this.keysPressed.has(code);
@@ -142,11 +152,13 @@ export class InputManager implements Updateable {
         this.handlePointerMove(e);
         this.pointerButtonsPressed.delete(e.button);
         this.pointerButtonsClicked.add(e.button);
+        this.pointerButtonsReleasedThisUpdate.add(e.button);
         this.pointerStateChanged = true;
     }
     handlePointerDown(e: PointerEvent) {
         this.handlePointerMove(e);
         this.pointerButtonsPressed.add(e.button);
+        this.pointerButtonsPressedThisUpdate.add(e.button);
         this.pointerStateChanged = true;
     }
     getMouseInputScaleFactors(): Vector_2 {
@@ -174,6 +186,8 @@ export class InputManager implements Updateable {
     async update() {
         this.pointerStateChanged = false;
         this.pointerButtonsClicked = new Set();
+        this.pointerButtonsPressedThisUpdate = new Set();
+        this.pointerButtonsReleasedThisUpdate = new Set();
         if (!this.firstUpdate) {
             this.handleResize();
             this.firstUpdate = true;

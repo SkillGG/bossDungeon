@@ -28,14 +28,16 @@ export interface LabelTextStyle {
     font: string;
     halign: AlignText;
     valign: JustifyText;
+    textStroke?: {
+        color:
+            | string
+            | ((
+                  ctx: CanvasRenderingContext2D,
+                  bounds: RectangleBounds
+              ) => CanvasGradient);
+        width: number;
+    };
 }
-
-export const LabelDefaultStyle: LabelTextStyle = {
-    halign: "center",
-    font: "",
-    valign: "center",
-    textColor: "black",
-};
 
 export class Label
     extends BoundedGameObject
@@ -44,6 +46,12 @@ export class Label
     border: Rectangle | RRectangle;
     style: LabelTextStyle;
     initStyles: LabelTextStyle;
+    static defaultStyle: LabelTextStyle = {
+        halign: "center",
+        font: "",
+        valign: "center",
+        textColor: "black",
+    };
     constructor(
         id: string,
         bounds: RectangleBounds,
@@ -52,7 +60,7 @@ export class Label
         zIndex?: number
     ) {
         super(id, bounds, zIndex);
-        this.style = { ...LabelDefaultStyle, ...style?.label };
+        this.style = { ...Label.defaultStyle, ...style?.label };
         if (!style || !isRoundedStyle(style)) {
             this.border = new Rectangle(`${id}_border`, this.bounds, {
                 ...style?.border,
@@ -82,6 +90,7 @@ export class Label
     async render(ctx: CanvasRenderingContext2D) {
         if (this.#hidden) return;
         await this.border.render(ctx);
+        ctx.beginPath();
         ctx.font = this.style.font;
         const textBounds = getTextMeasures(ctx, this.text);
         const textWidth = textBounds.width;
@@ -111,6 +120,22 @@ export class Label
                 ? this.bounds.width - this.border.style.strokeWidth * 2
                 : undefined
         );
+        if (this.style.textStroke) {
+            ctx.strokeStyle =
+                typeof this.style.textStroke.color === "function"
+                    ? this.style.textStroke.color(ctx, this.bounds)
+                    : this.style.textStroke.color;
+            ctx.lineWidth = this.style.textStroke.width;
+            ctx.strokeText(
+                this.text,
+                textX,
+                textY,
+                this.bounds.width
+                    ? this.bounds.width - this.border.style.strokeWidth * 2
+                    : undefined
+            );
+        }
+        ctx.closePath();
     }
     async update() {}
 }

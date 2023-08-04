@@ -8,6 +8,8 @@ export class Countdown {
 
     conns: UserConnection[];
 
+    interval: number = 1000;
+
     countdown: number;
 
     afterFinish: () => void;
@@ -36,17 +38,19 @@ export class Countdown {
         UserConnection.emitToAll(this.conns)("initCountdown", {
             type: this.type,
             time: this.countdown,
+            ms: this.interval,
         });
         this.timer = setInterval(() => {
             UserConnection.emitToAll(this.conns)("countdown", {
                 type: this.type,
+                ms: this.interval,
                 time: --this.countdown,
             });
 
             if (this.countdown <= 0) {
                 this.end(true);
             }
-        }, 1000);
+        }, this.interval);
     }
 
     private end(success: boolean) {
@@ -58,7 +62,7 @@ export class Countdown {
             this.beforeFinish();
             UserConnection.emitToAll(this.conns)("endCountdown", {
                 data: this.getData(),
-                time: 0,
+                type: this.type,
             });
             this.afterFinish();
         }
@@ -69,7 +73,6 @@ export class Countdown {
         this.end(false);
         UserConnection.emitToAll(this.conns)("terminateCountdown", {
             type: this.type,
-            time: this.countdown,
         });
     }
 }

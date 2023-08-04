@@ -1,4 +1,4 @@
-import { Card } from "../../../../shared/card";
+import { BossCard, Card } from "../../../../shared/Cards/card";
 import { BoundedGameObject } from "../../components/GameObject";
 import { Label } from "../../components/Primitives/Label/Label";
 import { RectangleBounds } from "../../components/Primitives/Rectangle/RectangleBounds";
@@ -71,5 +71,11 @@ export class GameCard extends BoundedGameObject {
         this.lifeLabel.render(ctx);
 
         ctx.closePath();
+    }
+}
+
+export class BossGameCard extends GameCard {
+    constructor(boss: BossCard, bounds: RectangleBounds, zIndex = oCARD_Z) {
+        super(boss, bounds, zIndex);
     }
 }

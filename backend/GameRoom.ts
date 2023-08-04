@@ -1,11 +1,8 @@
 import { UserSSEConnection } from "./utils";
 
 import { UserSSEEvents, timerData } from "./../shared/events";
-import { Deck } from "./game/cards/deck";
 import { Countdown } from "./countdown";
-import { Card } from "../shared/card";
 import { GameBoard } from "./GameBoard";
-import { randomInt } from "crypto";
 
 export class UserConnection extends UserSSEConnection<UserSSEEvents> {
     constructor(id: string) {
@@ -36,6 +33,21 @@ export class GameRoom {
 
     constructor() {}
 
+    drawPlayerDecks() {
+        this.gameBoard.randomizePlayerDecks();
+        for (const [player, deck] of Object.entries(this.gameBoard.decks)) {
+            this.countdown = new Countdown(
+                { type: "deckSelection", deck: { deckStr: deck.toString() } },
+                this.openConnections,
+                30,
+                {},
+                () => {
+                    return { type: "deckSelection" };
+                }
+            );
+        }
+    }
+
     pickBoss() {
         this.countdown = new Countdown(
             "pickBoss",
@@ -43,10 +55,14 @@ export class GameRoom {
             3,
             {
                 beforeFinish: () => {
-                    this.gameBoard.getRandomBossCard();
+                    this.gameBoard.drawBossCard();
+                },
+                afterFinish: () => {
+                    this.drawPlayerDecks();
                 },
             },
             () => {
+                console.log(this.gameBoard.boss.toString());
                 return {
                     type: "pickBoss",
                     boss: {

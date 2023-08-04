@@ -23,11 +23,18 @@ declare global {
 
 window.room = room;
 
+export const theme = {
+    textColor: "white",
+    bgColor: "#1c1c1c",
+} as const;
+
+
+
 SpriteLoader.loadAllSprites().then(() => {
     const gameBox = document.querySelector("#board_container");
 
     if (!gameBox) throw new Error("Could not find the boxes!");
-    
+
     const settings = new GameSettings<GameState>();
 
     const game = (window.game = new Game<GameState>(GameState.MENU));

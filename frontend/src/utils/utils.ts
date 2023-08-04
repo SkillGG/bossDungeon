@@ -4,6 +4,7 @@ import {
     endTimerShape,
     playerIDShape,
     roomDataShape,
+    terminateTimerShape,
     timerShape,
 } from "../../../shared/events";
 
@@ -389,7 +390,15 @@ export namespace DataParsers {
             return null;
         }
     };
-    export const dataCounterParsed = <K>(s: string) => {
+    export const terminateTimerParser = <K>(s: string) => {
+        const data = terminateTimerShape.safeParse(JSON.parse(s));
+        if (data.success) return [data.data] as K;
+        else {
+            console.error(data.error);
+            return null;
+        }
+    };
+    export const dataCounterParser = <K>(s: string) => {
         const data = endTimerShape.safeParse(JSON.parse(s));
         if (data.success) return [data.data] as K;
         else {

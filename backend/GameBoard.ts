@@ -1,6 +1,6 @@
 import { randomInt } from "crypto";
-import { Card } from "../shared/card";
-import { Deck } from "./game/cards/deck";
+import { Card, DungeonCard, Cards } from "../shared/Cards/card";
+import { Deck } from "../shared/Cards/deck";
 
 export class GameBoard {
     _boss?: Card;
@@ -10,19 +10,38 @@ export class GameBoard {
         return this._boss;
     }
 
-    private playerDecks: Record<string, Deck> = {};
+    private _decks: Record<string, Deck> = {};
+
+    get decks(): Record<string, Deck> {
+        return this._decks;
+    }
 
     constructor() {
         this._boss = undefined;
     }
 
-    getRandomBossCard() {
-        this._boss = GameBoard.bossCards[randomInt(GameBoard.bossCards.length)];
+    drawBossCard() {
+        this._boss = this.getRandomCard(Cards.bossCards);
+    }
+
+    getRandomCard<T extends Card>(cards: T[]) {
+        return cards[randomInt(cards.length)];
+    }
+
+    randomizePlayerDecks() {
+        for (const [player] of Object.entries(this._decks)) {
+            const deck = this.getPlayerDeck(player);
+            deck.clearDeck();
+            for (let i = 0; i < 5; i++) {
+                const card = this.getRandomCard(Cards.dungCards);
+                deck.addCard(new DungeonCard(card, `${card.dbid}_${player}`));
+            }
+        }
     }
 
     getPlayerDeck(id: string) {
-        if (this.playerDecks[id]) {
-            return this.playerDecks[id];
+        if (this._decks[id]) {
+            return this._decks[id];
         } else {
             const err = new Error(`Cannot find deck of ${id}`);
             console.error(err.stack);
@@ -31,10 +50,6 @@ export class GameBoard {
     }
 
     initPlayerDeck(id: string) {
-        this.playerDecks[id] = new Deck();
+        this._decks[id] = new Deck();
     }
-
-    static bossCards: Card[] = [
-        new Card("boss1", { life: 5, name: "Boss1", type: "boss" }),
-    ];
 }

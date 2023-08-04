@@ -71,7 +71,7 @@ export class Room extends EventEmitter<RoomEvents> {
         });
         this.eventSource.on(
             "endCountdown",
-            DataParsers.dataCounterParsed,
+            DataParsers.dataCounterParser,
             (data) => {
                 this.emit("endCountdown", data);
             }
@@ -88,7 +88,7 @@ export class Room extends EventEmitter<RoomEvents> {
         });
         this.eventSource.on(
             "terminateCountdown",
-            DataParsers.counterParser,
+            DataParsers.terminateTimerParser,
             (data) => {
                 this.emit("terminateCountdown", data);
             }

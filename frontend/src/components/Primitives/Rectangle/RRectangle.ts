@@ -6,7 +6,21 @@ export interface RRectangleStyle {
     fillColor: string;
     strokeColor: string;
     strokeWidth: number;
+    fillGradient?: (
+        ctx: CanvasRenderingContext2D,
+        bounds: RectangleBounds
+    ) => CanvasGradient;
+    strokeGradient?: (
+        ctx: CanvasRenderingContext2D,
+        bounds: RectangleBounds
+    ) => CanvasGradient;
     radii: [number, number, number, number];
+    shadow?: {
+        color: string;
+        blur: number;
+        offsetX?: number;
+        offsetY?: number;
+    };
 }
 
 export const RectangleDefaultStyle: RRectangleStyle = {
@@ -46,8 +60,12 @@ export class RRectangle
     async render(ctx: CanvasRenderingContext2D) {
         if (this.#hidden) return;
         if (this.bounds.width * this.bounds.height === 0) return;
-        ctx.fillStyle = this.style.fillColor;
-        ctx.strokeStyle = this.style.strokeColor;
+        ctx.beginPath();
+        ctx.fillStyle =
+            this.style.fillGradient?.(ctx, this.bounds) ?? this.style.fillColor;
+        ctx.strokeStyle =
+            this.style.strokeGradient?.(ctx, this.bounds) ??
+            this.style.strokeColor;
         ctx.lineWidth = this.style.strokeWidth;
         ctx.roundRect(
             this.bounds.x,
@@ -56,8 +74,19 @@ export class RRectangle
             this.bounds.height,
             this.style.radii
         );
+        if (this.style.shadow) {
+            ctx.shadowBlur = this.style.shadow.blur;
+            ctx.shadowColor = this.style.shadow.color;
+            if (this.style.shadow.offsetX) {
+                ctx.shadowOffsetX = this.style.shadow.offsetX;
+            }
+            if (this.style.shadow.offsetY) {
+                ctx.shadowOffsetY = this.style.shadow.offsetY;
+            }
+        }
         ctx.fill();
         ctx.stroke();
+        ctx.closePath();
     }
     intersects(bounds: RectangleBounds) {
         if (this.#hidden) return;

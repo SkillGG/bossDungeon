@@ -1,5 +1,5 @@
 import { Game } from "../../game";
-import { GameState } from "../../main";
+import { GameState, theme } from "../../main";
 import { mMENU_Z } from "../../utils/zLayers";
 import { ObjectManager } from "../../components/ObjectManager";
 import {
@@ -36,27 +36,53 @@ export class GameMenu extends StateManager<GameState> {
         super(GameMenu.DefaultID, manager, GameState.MENU);
         this.nameLabel = new Label(
             "nameLabel",
-            new RectangleBounds(0, 15, Game.WIDTH, 1),
+            new RectangleBounds(0, 25, Game.WIDTH, 1),
             "Boss Dungeon",
             {
                 border: { strokeColor: "transparent" },
                 label: {
-                    textColor: "black",
-                    font: "2em normal Helvetica",
+                    textColor: theme.textColor,
+                    font: `normal 3em 'Lumanosimo', cursive`,
                 },
             },
             zIndex
         );
         this.room = room;
 
-        const buttonHover: ButtonOnCalls = {
+        const buttonOnStyles: ButtonOnCalls = {
             onenter(ev) {
-                ev.target.label.border.style.fillColor = "blue";
-                // ev.target.label.
+                ev.target.label.border.style.shadow = {
+                    color: "#3b82f6",
+                    blur: 5,
+                    offsetY: 5,
+                };
             },
             onleave(ev) {
                 ev.target.label.clearStyles();
                 ev.target.label.border.clearStyles();
+            },
+            onmousedown(ev) {
+                if (ev.target.label.border.style.shadow) {
+                    ev.target.label.border.style.shadow.blur = 1;
+                    ev.target.label.border.style.shadow.offsetY = 1;
+                }
+                ev.target.bounds.setPosition(
+                    ev.target.bounds.x,
+                    ev.target.bounds.y + 5
+                );
+            },
+            onmouseup(ev) {
+                ev.target.bounds.setPosition(
+                    ev.target.bounds.x,
+                    ev.target.bounds.y - 5
+                );
+                ev.target.label.border.style.shadow = undefined;
+                if (ev.target.isIn) {
+                    ev.target.onCalls.onenter?.({
+                        mousePos: ev.mousePos,
+                        target: ev.target,
+                    });
+                }
             },
         };
 
@@ -64,7 +90,7 @@ export class GameMenu extends StateManager<GameState> {
             `btnJoin`,
             new RectangleBounds(Game.WIDTH / 2 - 90, 90 + 90 * 1, 180, 65),
             {
-                ...buttonHover,
+                ...buttonOnStyles,
                 onclick: () => {
                     if (this.eventSource) {
                         console.error("Connection already exists!");
@@ -93,6 +119,25 @@ export class GameMenu extends StateManager<GameState> {
                 rounded: true,
                 border: {
                     radii: [90, 90, 10, 10],
+                    fillGradient: (
+                        ctx: CanvasRenderingContext2D,
+                        bounds: RectangleBounds
+                    ) => {
+                        const { x, y, width: w, height: h } = bounds;
+                        const gradient = ctx.createLinearGradient(
+                            x + w / 2,
+                            y,
+                            x + w / 2,
+                            y + h
+                        );
+                        gradient.addColorStop(0, "#538FFB");
+                        gradient.addColorStop(1, "#5B54FA");
+                        return gradient;
+                    },
+                },
+                label: {
+                    textColor: theme.textColor,
+                    font: `normal 1.6em "Fira Sans", serif`,
                 },
             },
             zIndex
@@ -102,7 +147,7 @@ export class GameMenu extends StateManager<GameState> {
             `btnSettings`,
             new RectangleBounds(Game.WIDTH / 2 - 90, 90 + 90 * 2, 180, 65),
             {
-                ...buttonHover,
+                ...buttonOnStyles,
                 onclick: () => {},
             },
             "Settings",
@@ -110,6 +155,25 @@ export class GameMenu extends StateManager<GameState> {
                 rounded: true,
                 border: {
                     radii: [10, 10, 90, 90],
+                    fillGradient: (
+                        ctx: CanvasRenderingContext2D,
+                        bounds: RectangleBounds
+                    ) => {
+                        const { x, y, width: w, height: h } = bounds;
+                        const gradient = ctx.createLinearGradient(
+                            x + w / 2,
+                            y,
+                            x + w / 2,
+                            y + h
+                        );
+                        gradient.addColorStop(0, "#5B54FA");
+                        gradient.addColorStop(1, "#538FFB");
+                        return gradient;
+                    },
+                },
+                label: {
+                    textColor: theme.textColor,
+                    font: `normal 1.5em "Fira Sans", serif`,
                 },
             },
             zIndex

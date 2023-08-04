@@ -1,3 +1,10 @@
+@font-face {
+    font-family: 'Limanosimo';
+    src: url('https://fonts.googleapis.com/css2?family=Lumanosimo&display=swap');
+}
+
+
+
 * {
     box-sizing: border-box;
 }

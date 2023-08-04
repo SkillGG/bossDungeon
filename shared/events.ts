@@ -9,7 +9,8 @@ import z, {
     boolean,
     union,
 } from "zod";
-import { Card } from "./card";
+import { Card } from "./Cards/card";
+import { Deck } from "./Cards/deck";
 
 const event = tuple;
 
@@ -17,6 +18,10 @@ export const playerIDShape = object({ playerid: string() });
 
 export const cardDataShape = object({
     cardStr: string().regex(Card.stringRegex),
+});
+
+export const deckDataShape = object({
+    deckStr: string().regex(Deck.stringRegex),
 });
 
 export const timerData = discriminatedUnion("type", [
@@ -27,17 +32,27 @@ export const timerData = discriminatedUnion("type", [
     object({
         type: literal("gameLaunch"),
     }),
+    object({
+        type: literal("deckSelection"),
+    }),
 ]);
 
-export const timerType = union([literal("pickBoss"), literal("gameLaunch")]);
+export const timerType = union([
+    literal("pickBoss"),
+    literal("gameLaunch"),
+    object({ type: literal("deckSelection"), deck: deckDataShape }),
+]);
+
+export const terminateTimerShape = object({ type: timerType });
 
 export const endTimerShape = object({
-    time: number().int(),
     data: timerData,
+    type: timerType,
 });
 
 export const timerShape = object({
     time: number().int(),
+    ms: number().int(),
     type: timerType,
 });
 
@@ -56,7 +71,7 @@ export const UserSSEEvents = object({
 
     countdown: event([timerShape]),
     initCountdown: event([timerShape]),
-    terminateCountdown: event([timerShape]),
+    terminateCountdown: event([terminateTimerShape]),
     endCountdown: event([endTimerShape]),
 });
 

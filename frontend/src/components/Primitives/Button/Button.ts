@@ -18,6 +18,8 @@ type ButtonStyle = LabelWithBorderStyle;
 
 export interface ButtonOnCalls {
     onclick?: (ev: ButtonClickEvent) => void;
+    onmousedown?: (ev: ButtonClickEvent) => void;
+    onmouseup?: (ev: ButtonClickEvent) => void;
     onenter?: (ev: ButtonMouseEvent) => void;
     onleave?: (ev: ButtonMouseEvent) => void;
 }
@@ -52,6 +54,8 @@ export class Button
     }
     isIn: boolean = false;
 
+    pressedIn: boolean = false;
+
     #hidden = false;
 
     hide() {
@@ -72,23 +76,46 @@ export class Button
             if (this.isIn === true) this.onCalls.onleave?.(MouseEvent);
             this.isIn = false;
         }
-        if (Game.input.pointerButtonsClicked.size > 0 && this.isIn) {
-            this.onCalls.onclick?.({
-                ...MouseEvent,
-                button: new Set(
-                    [...Game.input.pointerButtonsClicked].map((q) =>
-                        q === LEFT_MOUSE_BUTTON
-                            ? "left"
-                            : q === RIGHT_MOUSE_BUTTON
-                            ? "right"
-                            : "middle"
-                    )
-                ),
-            });
+        if (this.isIn) {
+            if (Game.input.hasPressedMouseButton(LEFT_MOUSE_BUTTON)) {
+                this.onCalls.onmousedown?.({
+                    ...MouseEvent,
+                    button: new Set(["left"]),
+                });
+                this.pressedIn = true;
+            }
+            if (
+                Game.input.hasReleasedTouch() ||
+                (this.pressedIn &&
+                    Game.input.hasReleasedMouseButton(LEFT_MOUSE_BUTTON))
+            ) {
+                this.onCalls.onclick?.({
+                    ...MouseEvent,
+                    button: new Set(
+                        [...Game.input.pointerButtonsClicked].map((q) =>
+                            q === LEFT_MOUSE_BUTTON
+                                ? "left"
+                                : q === RIGHT_MOUSE_BUTTON
+                                ? "right"
+                                : "middle"
+                        )
+                    ),
+                });
+            }
+        }
+        if (this.pressedIn) {
+            if (Game.input.hasReleasedMouseButton(LEFT_MOUSE_BUTTON)) {
+                console.log("onmouseup");
+                this.onCalls.onmouseup?.({
+                    ...MouseEvent,
+                    button: new Set(["left"]),
+                });
+                this.pressedIn = false;
+            }
         }
     }
     async render(ctx: CanvasRenderingContext2D) {
         if (this.#hidden) return;
-        await this.label.render(ctx);
+        await this.label.safeCTXRender(ctx);
     }
 }
