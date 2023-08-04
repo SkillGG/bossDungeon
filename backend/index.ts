@@ -31,7 +31,7 @@ addSSERoute(
             res.status(400).send("Player already exists!");
             return;
         }
-        res.sseevent("roomData", gameRoom.getRoomData());
+        res.sseevent("roomData", gameRoom.getRoomLobbyData());
         conn.once("close", () => {
             // close connection
             conn.close();
@@ -61,8 +61,10 @@ addSSERoute(
         conn.on("countdown", (data) => {
             res.sseevent("countdown", data);
         });
-        conn.on("gameStart", () => res.sseevent("gameStart"));
-        conn.on("terminateCountdown", () => res.sseevent("terminateCountdown"));
+        conn.on("endCountdown", (data) => res.sseevent("endCountdown", data));
+        conn.on("terminateCountdown", (data) =>
+            res.sseevent("terminateCountdown", data)
+        );
         // send to everyone that player is joining
         gameRoom.join(playerid, conn);
     }

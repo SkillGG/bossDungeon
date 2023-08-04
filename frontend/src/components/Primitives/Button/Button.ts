@@ -1,5 +1,5 @@
 import { Game } from "../../../game";
-import { Vector2, Hideable } from "../../../utils/utils";
+import { Vector2, Hideable, Styled } from "../../../utils/utils";
 import { BoundedGameObject } from "../../GameObject";
 import { LEFT_MOUSE_BUTTON, RIGHT_MOUSE_BUTTON } from "../../KeyboardManager";
 import { LabelWithBorderStyle, Label } from "../Label/Label";
@@ -22,7 +22,10 @@ export interface ButtonOnCalls {
     onleave?: (ev: ButtonMouseEvent) => void;
 }
 
-export class Button extends BoundedGameObject implements Hideable {
+export class Button
+    extends BoundedGameObject
+    implements Hideable, Styled<LabelWithBorderStyle>
+{
     label: Label;
     onCalls: ButtonOnCalls;
     constructor(
@@ -36,6 +39,16 @@ export class Button extends BoundedGameObject implements Hideable {
         super(id, bounds, zIndex);
         this.onCalls = on;
         this.label = new Label(`${id}_label`, bounds, label, style);
+    }
+    get style() {
+        return { label: this.label.style };
+    }
+    get initStyles() {
+        return { label: this.label.initStyles };
+    }
+    clearStyles(): void {
+        this.label.clearStyles();
+        this.label.border.clearStyles();
     }
     isIn: boolean = false;
 
@@ -75,7 +88,7 @@ export class Button extends BoundedGameObject implements Hideable {
         }
     }
     async render(ctx: CanvasRenderingContext2D) {
-        if(this.#hidden) return;
+        if (this.#hidden) return;
         await this.label.render(ctx);
     }
 }

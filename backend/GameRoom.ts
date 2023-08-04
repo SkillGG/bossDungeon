@@ -1,6 +1,11 @@
 import { UserSSEConnection } from "./utils";
 
-import { UserSSEEvents } from "./../shared/events";
+import { UserSSEEvents, timerData } from "./../shared/events";
+import { Deck } from "./game/cards/deck";
+import { Countdown } from "./countdown";
+import { Card } from "../shared/card";
+import { GameBoard } from "./GameBoard";
+import { randomInt } from "crypto";
 
 export class UserConnection extends UserSSEConnection<UserSSEEvents> {
     constructor(id: string) {
@@ -12,6 +17,8 @@ export class UserConnection extends UserSSEConnection<UserSSEEvents> {
 export class GameRoom {
     players: Map<string, UserConnection> = new Map();
     readyPlayers: Set<string> = new Set();
+
+    gameBoard: GameBoard = new GameBoard();
 
     get openedPlayers() {
         return new Set(
@@ -25,52 +32,53 @@ export class GameRoom {
 
     gameInProgress = false;
 
-    countdownTimer?: NodeJS.Timer;
+    countdown?: Countdown;
 
     constructor() {}
 
-    getRoomData() {
-        const ret: UserSSEEvents["roomData"][0] = { playersIn: {} };
-        for (const [pl] of this.players) {
-            ret.playersIn[pl] = { ready: this.readyPlayers.has(pl) };
-        }
-        return ret;
+    pickBoss() {
+        this.countdown = new Countdown(
+            "pickBoss",
+            this.openConnections,
+            3,
+            {
+                beforeFinish: () => {
+                    this.gameBoard.getRandomBossCard();
+                },
+            },
+            () => {
+                return {
+                    type: "pickBoss",
+                    boss: {
+                        cardStr: this.gameBoard.boss.toString(),
+                    },
+                };
+            }
+        );
+        this.countdown.start();
     }
 
     startGame() {
-        //
-    }
-
-    startCountdown() {
-        if (this.countdownTimer) return;
-        let ctd = 5;
-        UserConnection.emitToAll(this.openConnections)("initCountdown", {
-            time: ctd,
-        });
-        this.countdownTimer = setInterval(() => {
-            if (!this.countdownTimer) return;
-            ctd--;
-            UserConnection.emitToAll(this.openConnections)("countdown", {
-                time: ctd,
-            });
-            if (ctd <= 0) {
-                clearInterval(this.countdownTimer);
-                this.countdownTimer = undefined;
-                console.log("The end of the timer!");
-                UserConnection.emitToAll(this.openConnections)("gameStart");
+        this.countdown = new Countdown(
+            "gameLaunch",
+            this.openConnections,
+            2,
+            {
+                afterFinish: () => {
+                    this.countdown = undefined;
+                    this.pickBoss();
+                },
+            },
+            () => {
+                return { type: "gameLaunch" };
             }
-        }, 1000);
-    }
-
-    terminateCountdown() {
-        if (!this.countdownTimer) return;
-        clearInterval(this.countdownTimer);
-        this.countdownTimer = undefined;
-        UserConnection.emitToAll(this.openConnections)("terminateCountdown");
+        );
+        this.countdown.start();
     }
 
     join(playerid: string, c: UserConnection) {
         this.players.set(playerid, c);
+        this.gameBoard.initPlayerDeck(playerid);
         UserConnection.emitToAll(this.openConnections)("join", {
             playerid,
         });
@@ -82,8 +90,8 @@ export class GameRoom {
         UserConnection.emitToAll(this.openConnections)("leave", {
             playerid,
         });
-        if (this.countdownTimer) {
-            this.terminateCountdown();
+        if (this.countdown) {
+            this.countdown.abort();
         }
     }
 
@@ -98,16 +106,24 @@ export class GameRoom {
         this.readyPlayers.add(playerid);
         UserConnection.emitToAll(this.openConnections)("ready", { playerid });
         console.log(this.openedPlayers.size, this.allPlayersReady);
-        if (this.openedPlayers.size === 4 && this.allPlayersReady) {
-            this.startCountdown();
+        if (this.openedPlayers.size === 2 && this.allPlayersReady) {
+            this.startGame();
         }
     }
 
     markUnready(playerid: string) {
         this.readyPlayers.delete(playerid);
         UserConnection.emitToAll(this.openConnections)("unready", { playerid });
-        if (this.countdownTimer) {
-            this.terminateCountdown();
+        if (this.countdown) {
+            this.countdown.abort();
         }
+    }
+
+    getRoomLobbyData() {
+        const ret: UserSSEEvents["roomData"][0] = { playersIn: {} };
+        for (const [pl] of this.players) {
+            ret.playersIn[pl] = { ready: this.readyPlayers.has(pl) };
+        }
+        return ret;
     }
 }

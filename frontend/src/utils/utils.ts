@@ -1,6 +1,7 @@
 // #region Math
 
 import {
+    endTimerShape,
     playerIDShape,
     roomDataShape,
     timerShape,
@@ -293,6 +294,13 @@ export class EventEmitter<EventMap extends Record<string, any[]>> {
     private listeners: { [K in keyof EventMap]?: Set<Listener<EventMap[K]>> } =
         {};
     protected prefix: string | null = null;
+
+    removeListeners<T extends keyof EventMap & string>(id: T) {
+        const listeners = this.listeners[id] ?? new Set();
+        listeners.clear();
+        if (this.prefix)
+            console.log(`removing ${id} listeners in ${this.prefix}`);
+    }
     on<T extends keyof EventMap & string>(
         id: T,
         listener: (...data: EventMap[T]) => void
@@ -357,9 +365,7 @@ export class TypedEventSource<
 }
 export namespace DataParsers {
     export const parseRoomData = <K>(s: string) => {
-        const data = roomDataShape.safeParse(
-            JSON.parse(s)
-        );
+        const data = roomDataShape.safeParse(JSON.parse(s));
         if (data.success) {
             return [data.data] as K;
         } else {
@@ -367,17 +373,29 @@ export namespace DataParsers {
         }
     };
     export const usernameParser = <K>(s: string) => {
-        const username = playerIDShape.safeParse(JSON.parse(s));
-        if (username.success) {
-            return [username.data] as K;
+        const data = playerIDShape.safeParse(JSON.parse(s));
+        if (data.success) {
+            return [data.data] as K;
         } else {
+            console.error(data.error);
             return null;
         }
     };
     export const counterParser = <K>(s: string) => {
-        const timer = timerShape.safeParse(JSON.parse(s));
-        if (timer.success) return [timer.data] as K;
-        else return null;
+        const data = timerShape.safeParse(JSON.parse(s));
+        if (data.success) return [data.data] as K;
+        else {
+            console.error(data.error);
+            return null;
+        }
+    };
+    export const dataCounterParsed = <K>(s: string) => {
+        const data = endTimerShape.safeParse(JSON.parse(s));
+        if (data.success) return [data.data] as K;
+        else {
+            console.error(data.error);
+            return null;
+        }
     };
     export const noop = <K>() => {
         return [] as K;

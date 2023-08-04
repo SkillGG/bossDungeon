@@ -6,6 +6,7 @@ import { StateManager } from "../../components/StateManager";
 import { Game } from "../../game";
 import { GameState } from "../../main";
 import { Server } from "../../utils/server";
+import { RoomBoard } from "./board";
 import { Room } from "./room";
 
 export class RoomLobby extends StateManager<GameState> {
@@ -25,6 +26,7 @@ export class RoomLobby extends StateManager<GameState> {
         super(RoomLobby.DefaultID, manager, GameState.GAME_LOBBY);
         this.room = room;
         room.on("join", ({ playerid }) => {
+            console.log("joined player", playerid);
             this.addPlayerLabel(playerid);
         });
         room.on("connectionLost", () => {
@@ -35,6 +37,7 @@ export class RoomLobby extends StateManager<GameState> {
             this.removePlayerLabel(playerid);
         });
         room.on("initData", ({ playerList }) => {
+            console.log("init data", playerList);
             for (const pl of playerList) {
                 this.addPlayerLabel(pl);
             }
@@ -58,21 +61,27 @@ export class RoomLobby extends StateManager<GameState> {
                 this.readyButton.label.border.clearStyles();
             }
         });
-        room.on("initCountdown", ({ time }) => {
-            // this.readyButton.hide();
-            this.countdownLabel.show();
-            this.countdownLabel.text = `${time}`;
-            // for (const l of this.labels) l.hide();
+        room.on("initCountdown", ({ time, type }) => {
+            if (type === "gameLaunch") {
+                this.countdownLabel.show();
+                this.countdownLabel.text = `${time}`;
+            }
         });
-        room.on("countdown", ({ time }) => {
-            this.countdownLabel.text = `${time}`;
+        room.on("countdown", ({ time, type }) => {
+            if (type === "gameLaunch") this.countdownLabel.text = `${time}`;
         });
-        room.on("terminateCountdown", ()=>{
+        room.on("terminateCountdown", () => {
             this.countdownLabel.hide();
         });
-        room.on("gameStart", () => {
-            this.manager.switchState(GameState.GAME_BOARD);
-            this.resetLobby();
+        room.on("endCountdown", ({ data: { type } }) => {
+            console.log("endCountdown", type);
+            if (type === "gameLaunch") {
+                this.manager
+                    .getStateManager<RoomBoard>(RoomBoard.DefaultID)
+                    .initListeners();
+                this.manager.switchState(GameState.GAME_BOARD);
+                this.resetLobby();
+            }
         });
         this.readyButton = new Button(
             "startButton",
@@ -120,6 +129,8 @@ export class RoomLobby extends StateManager<GameState> {
         this.labels = [];
         this.countdownLabel.hide();
         this.readyButton.show();
+        this.readyButton.label.clearStyles();
+        this.readyButton.label.border.clearStyles();
     }
 
     rearrangeLabels() {
@@ -135,6 +146,7 @@ export class RoomLobby extends StateManager<GameState> {
                 textColor: "red",
             },
         });
+        console.log("adding label", label);
         this.labels.push(label);
         this.registerObject(label);
         this.rearrangeLabels();
@@ -147,7 +159,5 @@ export class RoomLobby extends StateManager<GameState> {
         }
         this.rearrangeLabels();
     }
-    async update(t: number): Promise<void> {
-        t;
-    }
+    async update(): Promise<void> {}
 }
