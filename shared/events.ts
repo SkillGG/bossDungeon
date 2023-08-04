@@ -8,6 +8,7 @@ import z, {
     tuple,
     boolean,
     union,
+    optional,
 } from "zod";
 import { Card } from "./Cards/card";
 import { Deck } from "./Cards/deck";
@@ -43,7 +44,18 @@ export const timerType = union([
     object({ type: literal("deckSelection"), deck: deckDataShape }),
 ]);
 
-export const terminateTimerShape = object({ type: timerType });
+export const terminationReason = discriminatedUnion("type", [
+    object({
+        type: literal("disconnect"),
+        playerid: playerIDShape.shape.playerid,
+    }),
+    object({ type: literal("noop") }),
+]);
+
+export const terminateTimerShape = object({
+    type: timerType,
+    reason: optional(terminationReason),
+});
 
 export const endTimerShape = object({
     data: timerData,
@@ -78,3 +90,4 @@ export const UserSSEEvents = object({
 export type UserSSEEvents = z.infer<typeof UserSSEEvents>;
 export type timerData = z.infer<typeof timerData>;
 export type timerType = z.infer<typeof timerType>;
+export type terminationReason = z.infer<typeof terminationReason>;

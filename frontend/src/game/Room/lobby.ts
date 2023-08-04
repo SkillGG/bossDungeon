@@ -26,77 +26,6 @@ export class RoomLobby extends StateManager<GameState> {
     constructor(manager: ObjectManager<GameState>, room: Room) {
         super(RoomLobby.DefaultID, manager, GameState.GAME_LOBBY);
         this.room = room;
-        room.on("join", ({ playerid }) => {
-            console.log("joined player", playerid);
-            this.addPlayerLabel(playerid);
-        });
-        room.on("connectionLost", () => {
-            this.resetLobby();
-            manager.switchState(GameState.MENU);
-        });
-        room.on("leave", ({ playerid }) => {
-            this.removePlayerLabel(playerid);
-        });
-        room.on("initData", ({ playerList }) => {
-            console.log("init data", playerList);
-            for (const pl of playerList) {
-                this.addPlayerLabel(pl);
-            }
-        });
-        room.on("ready", ({ playerid }) => {
-            const pLabel = this.labels.find((f) => f.text === playerid);
-            if (pLabel) pLabel.style.textColor = "green";
-            if (playerid === room.player) {
-                console.log("Making button green bc", playerid, " readied");
-                this.readyButton.label.border.style.fillGradient = (
-                    ctx,
-                    { x, y, width: w, height: h }
-                ) => {
-                    const gradient = ctx.createLinearGradient(
-                        x + w / 2,
-                        y,
-                        x + w / 2,
-                        y + h
-                    );
-                    gradient.addColorStop(0, "#21fc00");
-                    gradient.addColorStop(0.5, "#00fc5c");
-                    return gradient;
-                };
-            }
-        });
-        room.on("unready", ({ playerid }) => {
-            const pLabel = this.labels.find((f) => f.text === playerid);
-            if (pLabel) {
-                pLabel.clearStyles();
-            }
-            if (playerid === room.player) {
-                this.readyButton.label.clearStyles();
-                this.readyButton.label.border.clearStyles();
-            }
-        });
-        room.on("initCountdown", ({ time, type, ms }) => {
-            if (type === "gameLaunch") {
-                this.countdownLabel.show();
-                this.countdownLabel.initCounter(time, ms);
-                this.countdownLabel.updateTime(time);
-            }
-        });
-        room.on("countdown", ({ time, type }) => {
-            if (type === "gameLaunch") this.countdownLabel.updateTime(time);
-        });
-        room.on("terminateCountdown", () => {
-            this.countdownLabel.hide();
-        });
-        room.on("endCountdown", ({ data: { type } }) => {
-            console.log("endCountdown", type);
-            if (type === "gameLaunch") {
-                this.manager
-                    .getStateManager<RoomBoard>(RoomBoard.DefaultID)
-                    .initListeners();
-                this.manager.switchState(GameState.GAME_BOARD);
-                this.resetLobby();
-            }
-        });
         this.readyButton = new Button(
             "startButton",
             new RectangleBounds(400, 90, 100, 50),
@@ -158,6 +87,77 @@ export class RoomLobby extends StateManager<GameState> {
         );
         this.countdownLabel.hide();
         this.objects.push(this.readyButton, this.countdownLabel);
+        this.initRoomListeners();
+    }
+
+    initRoomListeners() {
+        this.room.on("join", ({ playerid }) => {
+            this.addPlayerLabel(playerid);
+        });
+        this.room.on("connectionLost", () => {
+            this.resetLobby();
+            this.manager.switchState(GameState.MENU);
+        });
+        this.room.on("leave", ({ playerid }) => {
+            this.removePlayerLabel(playerid);
+        });
+        this.room.on("initData", ({ playerList }) => {
+            for (const pl of playerList) {
+                this.addPlayerLabel(pl);
+            }
+        });
+        this.room.on("ready", ({ playerid }) => {
+            const pLabel = this.labels.find((f) => f.text === playerid);
+            if (pLabel) pLabel.style.textColor = "green";
+            if (playerid === this.room.player) {
+                this.readyButton.label.border.style.fillGradient = (
+                    ctx,
+                    { x, y, width: w, height: h }
+                ) => {
+                    const gradient = ctx.createLinearGradient(
+                        x + w / 2,
+                        y,
+                        x + w / 2,
+                        y + h
+                    );
+                    gradient.addColorStop(0, "#21fc00");
+                    gradient.addColorStop(0.5, "#00fc5c");
+                    return gradient;
+                };
+            }
+        });
+        this.room.on("unready", ({ playerid }) => {
+            const pLabel = this.labels.find((f) => f.text === playerid);
+            if (pLabel) {
+                pLabel.clearStyles();
+            }
+            if (playerid === this.room.player) {
+                this.readyButton.label.clearStyles();
+                this.readyButton.label.border.clearStyles();
+            }
+        });
+        this.room.on("initCountdown", ({ time, type, ms }) => {
+            if (type === "gameLaunch") {
+                this.countdownLabel.show();
+                this.countdownLabel.initCounter(time, ms);
+                this.countdownLabel.updateTime(time);
+            }
+        });
+        this.room.on("countdown", ({ time, type }) => {
+            if (type === "gameLaunch") this.countdownLabel.updateTime(time);
+        });
+        this.room.on("terminateCountdown", () => {
+            this.countdownLabel.hide();
+        });
+        this.room.on("endCountdown", ({ data: { type } }) => {
+            if (type === "gameLaunch") {
+                this.manager
+                    .getStateManager<RoomBoard>(RoomBoard.DefaultID)
+                    .initBoard();
+                this.manager.switchState(GameState.GAME_BOARD);
+                this.countdownLabel.hide();
+            }
+        });
     }
 
     resetLobby() {
@@ -182,7 +182,6 @@ export class RoomLobby extends StateManager<GameState> {
                 textColor: "red",
             },
         });
-        console.log("adding label", label);
         this.labels.push(label);
         this.registerObject(label);
         this.rearrangeLabels();

@@ -105,7 +105,6 @@ export class Button
         }
         if (this.pressedIn) {
             if (Game.input.hasReleasedMouseButton(LEFT_MOUSE_BUTTON)) {
-                console.log("onmouseup");
                 this.onCalls.onmouseup?.({
                     ...MouseEvent,
                     button: new Set(["left"]),

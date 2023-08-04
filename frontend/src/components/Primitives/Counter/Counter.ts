@@ -51,7 +51,6 @@ export class Counter
         super(id, bounds, zIndex);
         this.options = counterOptions;
         this.initStyles = { ...this.style };
-        console.log(this.style);
         this.textLabel = new Label(
             `${id}_textlabel`,
             bounds,

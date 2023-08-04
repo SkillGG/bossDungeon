@@ -59,7 +59,6 @@ export abstract class Card {
 
     static fromString(s: string): Card {
         const exec = Card.stringRegex.exec(s.trim());
-        console.log("Creating card from string", s, exec, Card.stringRegex);
         if (exec) {
             const [_, type, dbid, id, lStr] = exec;
             const life = parseInt(lStr);

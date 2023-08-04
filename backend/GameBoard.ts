@@ -1,6 +1,7 @@
 import { randomInt } from "crypto";
 import { Card, DungeonCard, Cards } from "../shared/Cards/card";
 import { Deck } from "../shared/Cards/deck";
+import { UserConnection } from "./GameRoom";
 
 export class GameBoard {
     _boss?: Card;

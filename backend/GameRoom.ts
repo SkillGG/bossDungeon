@@ -1,6 +1,10 @@
 import { UserSSEConnection } from "./utils";
 
-import { UserSSEEvents, timerData } from "./../shared/events";
+import {
+    UserSSEEvents,
+    terminationReason,
+    timerData,
+} from "./../shared/events";
 import { Countdown } from "./countdown";
 import { GameBoard } from "./GameBoard";
 
@@ -31,20 +35,38 @@ export class GameRoom {
 
     countdown?: Countdown;
 
+    countdowns: Map<string, Countdown> = new Map();
+
     constructor() {}
 
     drawPlayerDecks() {
         this.gameBoard.randomizePlayerDecks();
         for (const [player, deck] of Object.entries(this.gameBoard.decks)) {
-            this.countdown = new Countdown(
-                { type: "deckSelection", deck: { deckStr: deck.toString() } },
-                this.openConnections,
+            const conn = this.players.get(player);
+            if (!conn || conn?.isClosed) continue;
+            const countdown = new Countdown(
+                {
+                    type: "deckSelection",
+                    deck: { deckStr: deck.toString() },
+                },
+                [conn],
                 30,
-                {},
+                {
+                    onAbort: (r?: terminationReason) => {
+                        this.countdowns.forEach((c) => {
+                            c.abort(r);
+                        });
+                    },
+                    afterFinish: () => {
+                        this.countdowns.delete(player);
+                    },
+                },
                 () => {
                     return { type: "deckSelection" };
                 }
             );
+            this.countdowns.set(player, countdown);
+            countdown.start();
         }
     }
 
@@ -106,8 +128,13 @@ export class GameRoom {
         UserConnection.emitToAll(this.openConnections)("leave", {
             playerid,
         });
+        const termReason: terminationReason = {
+            type: "disconnect",
+            playerid,
+        };
+        this.countdowns.get(playerid)?.abort(termReason);
         if (this.countdown) {
-            this.countdown.abort();
+            this.countdown.abort(termReason);
         }
     }
 

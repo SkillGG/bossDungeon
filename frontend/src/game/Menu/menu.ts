@@ -36,7 +36,7 @@ export class GameMenu extends StateManager<GameState> {
         super(GameMenu.DefaultID, manager, GameState.MENU);
         this.nameLabel = new Label(
             "nameLabel",
-            new RectangleBounds(0, 25, Game.WIDTH, 1),
+            new RectangleBounds(0, 55, Game.WIDTH, 1),
             "Boss Dungeon",
             {
                 border: { strokeColor: "transparent" },

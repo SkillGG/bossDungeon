@@ -1,4 +1,5 @@
 import { BossCard, Card } from "../../../../shared/Cards/card";
+import { Deck } from "../../../../shared/Cards/deck";
 import { ObjectManager } from "../../components/ObjectManager";
 import { Label } from "../../components/Primitives/Label/Label";
 import { RectangleBounds } from "../../components/Primitives/Rectangle/RectangleBounds";
@@ -6,6 +7,7 @@ import { StateManager } from "../../components/StateManager";
 import { Game } from "../../game";
 import { GameState, theme } from "../../main";
 import { BossGameCard } from "./card";
+import { RoomLobby } from "./lobby";
 import { Room } from "./room";
 
 export class RoomBoard extends StateManager<GameState> {
@@ -42,13 +44,30 @@ export class RoomBoard extends StateManager<GameState> {
         this.pickBossTimer.hide();
     }
 
+    resetBoard() {
+        if (this.bossCard) {
+            this.removeObject(this.bossCard);
+            this.remove(this.bossCard);
+        }
+        this.bossCard = undefined;
+        this.boss = undefined;
+    }
+
+    initBoard() {
+        this.initListeners();
+        this.registerObjects();
+    }
+
     initListeners() {
         this.room.removeAllEventListeners();
-        console.log("cleaned all room event listeners!");
-        this.room.on("initCountdown", ({ type, time }) => {
-            if (type === "pickBoss") {
+        this.room.on("initCountdown", ({ type: data, time }) => {
+            if (data === "pickBoss") {
                 this.initPickingBoss(time);
-            } else {
+            } else if (typeof data === "object") {
+                if (data.type === "deckSelection") {
+                    const gameDeck = Deck.fromString(data.deck.deckStr);
+                    console.log("deck", gameDeck);
+                }
             }
         });
 
@@ -61,10 +80,24 @@ export class RoomBoard extends StateManager<GameState> {
 
         this.room.on("endCountdown", ({ data }) => {
             if (data.type === "pickBoss") {
-                console.log("got boss", data.boss.cardStr);
                 const card = Card.fromString(data.boss.cardStr);
                 if (card.type !== "boss") return;
                 this.bossPicked(card);
+            }
+        });
+        this.room.on("terminateCountdown", ({ reason }) => {
+            console.log("terminatedCountdown!", reason);
+            if (reason && reason.type === "disconnect" && reason.playerid) {
+                alert(
+                    `User ${reason.playerid} disconnected! Throwing out the game and returning to lobby!`
+                );
+                this.resetBoard();
+                this.room.removeAllEventListeners();
+                this.manager.switchState(GameState.GAME_LOBBY);
+                this.manager
+                    .getStateManager<RoomLobby>(RoomLobby.DefaultID)
+                    .initRoomListeners();
+                this.room.playerLeft(reason.playerid);
             }
         });
     }

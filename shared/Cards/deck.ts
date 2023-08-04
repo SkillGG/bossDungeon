@@ -24,7 +24,6 @@ export class Deck {
     static fromString(s: string) {
         const deck = new Deck();
         for (const [cardStr] of s.matchAll(Card.stringRegex)) {
-            console.log("adding card to deck", cardStr);
             const card = Card.fromString(cardStr);
             deck.addCard(card);
         }

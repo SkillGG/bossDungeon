@@ -79,6 +79,10 @@ export class Label
 
     #hidden = false;
 
+    get isHidden() {
+        return this.#hidden;
+    }
+
     show() {
         this.#hidden = false;
     }
@@ -137,5 +141,7 @@ export class Label
         }
         ctx.closePath();
     }
-    async update() {}
+    async update() {
+        if (this.text.includes("Pick")) console.log("update");
+    }
 }

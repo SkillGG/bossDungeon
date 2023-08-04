@@ -1,4 +1,4 @@
-import { timerData, timerType } from "../shared/events";
+import { terminationReason, timerData, timerType } from "../shared/events";
 import { UserConnection } from "./GameRoom";
 
 export class Countdown {
@@ -15,6 +15,7 @@ export class Countdown {
     afterFinish: () => void;
     beforeFinish: () => void;
     getData: () => timerData;
+    onAbort: (reason?: terminationReason) => void;
 
     finished = true;
 
@@ -22,7 +23,11 @@ export class Countdown {
         data: timerType,
         conns: UserConnection[],
         time: number,
-        finishes: { afterFinish?: () => void; beforeFinish?: () => void },
+        finishes: {
+            afterFinish?: () => void;
+            beforeFinish?: () => void;
+            onAbort?: () => void;
+        },
         getData: () => timerData
     ) {
         this.type = data;
@@ -30,6 +35,7 @@ export class Countdown {
         this.countdown = time;
         this.afterFinish = finishes.afterFinish || (() => {});
         this.beforeFinish = finishes.beforeFinish || (() => {});
+        this.onAbort = finishes.onAbort || (() => {});
         this.getData = getData;
     }
 
@@ -54,10 +60,10 @@ export class Countdown {
     }
 
     private end(success: boolean) {
+        console.log("ending interval", this.interval);
         this.finished = true;
         clearInterval(this.timer);
         this.timer = undefined;
-        console.log("The end of the timer!");
         if (success) {
             this.beforeFinish();
             UserConnection.emitToAll(this.conns)("endCountdown", {
@@ -68,11 +74,15 @@ export class Countdown {
         }
     }
 
-    abort() {
+    abort(reason?: terminationReason) {
+        console.log("aborting because ", reason);
         if (this.finished) return;
+        console.log("aborting countdown", this.type);
         this.end(false);
+        this.onAbort(reason);
         UserConnection.emitToAll(this.conns)("terminateCountdown", {
             type: this.type,
+            reason: reason ? reason : undefined,
         });
     }
 }

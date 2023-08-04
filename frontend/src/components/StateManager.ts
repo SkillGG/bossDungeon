@@ -16,6 +16,11 @@ export abstract class StateManager<T extends string> implements Updateable {
     add(...o: GameObject[]) {
         this.objects.push(...o);
     }
+    remove(...o: GameObject[]) {
+        this.objects = this.objects.filter(
+            (f) => !o.find((x) => x.id === f.id)
+        );
+    }
     registerObject(...obs: GameObject[]) {
         for (const o of obs) this.manager.addObject(o, this.state);
     }

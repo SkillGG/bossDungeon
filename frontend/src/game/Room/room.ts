@@ -48,13 +48,9 @@ export class Room extends EventEmitter<RoomEvents> {
                 this.ready(x[0]);
             });
         this.eventSource.onerror = () => {
+            console.error("Server connection lost!");
             this.emit("connectionLost");
-            alert("Server connection lost!");
-            this.eventSource?.close();
-            this.eventSource = undefined;
-            this.players = new Set();
-            this.lobbyData = new Map();
-            this._player = undefined;
+            this.severConnection();
         };
         this.eventSource.on("join", DataParsers.usernameParser, (data) => {
             // on player joins
@@ -112,5 +108,13 @@ export class Room extends EventEmitter<RoomEvents> {
     unready(pl: string) {
         this.lobbyData.set(pl, { ready: false });
         this.emit("unready", { playerid: pl });
+    }
+
+    severConnection() {
+        this.eventSource?.close();
+        this.eventSource = undefined;
+        this.players = new Set();
+        this.lobbyData = new Map();
+        this._player = undefined;
     }
 }
