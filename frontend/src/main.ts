@@ -64,7 +64,6 @@ SpriteLoader.loadAllSprites().then(() => {
 
     const gameBoard = new RoomBoard(game.manager, room);
     game.manager.addStateManager(gameBoard);
-    gameBoard.registerObjects();
 
     game.manager.addStateManager(GameSettings.manager);
     GameSettings.manager.registerObjects();

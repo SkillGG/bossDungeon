@@ -1,18 +1,27 @@
-import { BossCard, Card } from "../../../../shared/Cards/card";
+import { BossCard, Cards } from "../../../../shared/Cards/card";
 import { BoundedGameObject } from "../../components/GameObject";
 import { Label } from "../../components/Primitives/Label/Label";
 import { RectangleBounds } from "../../components/Primitives/Rectangle/RectangleBounds";
 import { oCARD_Z } from "../../utils/zLayers";
 
-export class GameCard extends BoundedGameObject {
-    card: Card;
+export abstract class GameCard<T extends Cards.Type> extends BoundedGameObject {
+    card: T;
 
-    nameLabel: Label;
-    lifeLabel: Label;
-
-    constructor(card: Card, bounds: RectangleBounds, zIndex = oCARD_Z) {
+    constructor(card: T, bounds: RectangleBounds, zIndex = oCARD_Z) {
         super(`card_${card.id}`, bounds, zIndex);
         this.card = card;
+    }
+
+    abstract update(): Promise<void>;
+
+    abstract render(ctx: CanvasRenderingContext2D): Promise<void>;
+}
+
+export class BossGameCard extends GameCard<BossCard> {
+    nameLabel: Label;
+    lifeLabel: Label;
+    constructor(card: BossCard, bounds: RectangleBounds, zIndex = oCARD_Z) {
+        super(card, bounds, zIndex);
         const { x, y, width: w, height: h } = bounds;
         this.nameLabel = new Label(
             `card_${card.id}_label`,
@@ -71,11 +80,5 @@ export class GameCard extends BoundedGameObject {
         this.lifeLabel.render(ctx);
 
         ctx.closePath();
-    }
-}
-
-export class BossGameCard extends GameCard {
-    constructor(boss: BossCard, bounds: RectangleBounds, zIndex = oCARD_Z) {
-        super(boss, bounds, zIndex);
     }
 }

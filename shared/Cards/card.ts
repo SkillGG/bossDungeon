@@ -1,230 +1,338 @@
-type BaseCardOptions = {
-    name: string;
-    life: number;
-    type: "boss" | "dungeon" | "spell" | "hero";
-    special?: true;
-};
+import {
+    z,
+    number,
+    object,
+    string,
+    literal,
+    union,
+    boolean,
+    optional,
+} from "zod";
 
-type ChangeableBaseCardOptions = Partial<
-    Omit<BaseCardOptions, "dbid" | "type" | "id">
->;
+// #region Card Util Types
 
-export abstract class Card {
+export const TreasureType = union([
+    literal("fight"),
+    literal("holy"),
+    literal("gold"),
+]);
+
+export type TreasureType = z.infer<typeof TreasureType>;
+type CardType = "boss" | "dungeon" | "spell" | "hero";
+
+// #endregion
+
+export abstract class Card<T extends object> {
     name: string;
     id: string;
     dbid: string;
 
-    life: number;
+    type: CardType;
 
-    type: BaseCardOptions["type"];
-
-    special: boolean = false;
-    constructor(c: Card, newid: string, o?: ChangeableBaseCardOptions);
-    constructor(dbid: string, options: BaseCardOptions);
+    constructor(c: Card<any>, newid: string);
+    constructor(dbid: string, name: string, type: CardType);
     constructor(
-        cardOrID: string | Card,
-        newidOrOptions: BaseCardOptions | string,
-        o?: ChangeableBaseCardOptions
+        cardOrID: string | Card<any>,
+        nameOrID?: string,
+        type?: CardType
     ) {
         if (
             typeof cardOrID === "string" &&
-            typeof newidOrOptions === "object"
+            typeof nameOrID === "string" &&
+            typeof type === "string"
         ) {
             // creating new card
-            this.dbid = cardOrID;
             this.id = cardOrID;
-            this.life = newidOrOptions.life;
-            this.name = newidOrOptions.name;
-            this.type = newidOrOptions.type;
-            this.special = newidOrOptions.special ?? this.special;
+            this.dbid = cardOrID;
+            this.name = nameOrID;
+            this.type = type;
         } else if (
             typeof cardOrID === "object" &&
-            typeof newidOrOptions === "string"
+            typeof nameOrID === "string"
         ) {
             // copying card with different id
-            this.id = newidOrOptions;
+            this.id = nameOrID;
             this.dbid = cardOrID.dbid;
-            this.life = o?.life ?? cardOrID.life;
-            this.name = o?.name ?? cardOrID.name;
+            this.name = cardOrID.name;
             this.type = cardOrID.type;
-            this.special = o?.special ?? cardOrID.special;
         } else throw "Incorrect Card constructor!";
     }
 
+    abstract get uniqueData(): T;
+    abstract set uniqueData(d: T);
+
     toString() {
-        return `${this.type}{${this.special ? "#" : ""}${this.dbid}:${
-            this.id
-        },${this.life}}`;
+        return `${this.type}{${this.dbid}:${this.id},${JSON.stringify(
+            this.uniqueData
+        )}}`;
     }
 
-    static fromString(s: string): Card {
+    static fromString(s: string): Cards.Type {
         const exec = Card.stringRegex.exec(s.trim());
         if (exec) {
-            const [_, type, dbid, id, lStr] = exec;
-            const life = parseInt(lStr);
-            switch (type) {
-                case "boss":
-                    return new BossCard(Cards.getCard(dbid), id, {
-                        life,
-                    });
-                case "dungeon":
-                    return new DungeonCard(Cards.getCard(dbid), id);
-                case "spell":
-                    return new SpellCard(Cards.getCard(dbid), id);
-                case "hero":
-                    return new HeroCard(Cards.getCard(dbid), id, { life });
+            const [_, type, dbid, id, uDStr] = exec;
+            try {
+                const uDObj = JSON.parse(uDStr.replace(/\/"/, '"'));
+                switch (type) {
+                    case "boss":
+                        return new BossCard(
+                            Cards.getCard(dbid),
+                            id,
+                            BossCard.data.parse(uDObj)
+                        );
+                    case "dungeon":
+                        return new DungeonCard(
+                            Cards.getCard(dbid),
+                            id,
+                            DungeonCard.data.parse(uDObj)
+                        );
+                    case "spell":
+                        return new SpellCard(
+                            Cards.getCard(dbid),
+                            id,
+                            SpellCard.data.parse(uDObj)
+                        );
+                    case "hero":
+                        return new HeroCard(
+                            Cards.getCard(dbid),
+                            id,
+                            HeroCard.data.parse(uDObj)
+                        );
+                }
+            } catch (err) {
+                console.error(err);
+                throw (
+                    "There was and error parsing uniqueData string from " +
+                    uDStr
+                );
             }
         }
         throw new Error(`Could not create card from string ` + s);
     }
 
     static get stringRegex() {
-        return /(boss|dungeon|spell|hero)\s*\{\s*(\S+?):(\S+?)\s*,\s*(\d+?)\s*}/gi;
+        return /(boss|dungeon|spell|hero)\s*\{\s*(\S+?):(\S+?)\s*,\s*({.*?})\s*}/gi;
     }
 }
 
-type SpellCardOptions = {
-    action(): void;
-    name: string;
-    special?: true;
-};
+// #region HeroCard
 
-export class SpellCard extends Card {
-    action: () => void;
+export type HeroCardData = z.infer<(typeof HeroCard)["data"]>;
 
-    constructor(c: SpellCard, id: string);
-    constructor(dbid: string, options: SpellCardOptions);
+type HeroCardOptions = z.infer<(typeof HeroCard)["options"]>;
+
+export class HeroCard extends Card<HeroCardData> {
+    static data = object({
+        life: number().int(),
+    });
+    static options = object({
+        life: number().int(),
+        name: string(),
+    });
+
+    life: number;
+
+    constructor(c: HeroCard, newid: string, o?: HeroCardData);
+    constructor(dbid: string, o: HeroCardOptions);
     constructor(
-        cardOrID: string | SpellCard,
-        newidOrOptions: SpellCardOptions | string
+        cardOrID: string | HeroCard,
+        id: string | HeroCardOptions,
+        opts?: HeroCardData
     ) {
-        if (
-            typeof cardOrID === "string" &&
-            typeof newidOrOptions === "object"
-        ) {
+        if (typeof cardOrID === "string" && typeof id === "object") {
+            const options = id;
             // create new card
-            super(cardOrID, {
-                name: newidOrOptions.name,
-                life: 0,
-                type: "spell",
-            });
-            this.action = newidOrOptions.action;
-        } else if (
-            typeof cardOrID === "object" &&
-            typeof newidOrOptions === "string"
-        ) {
+            super(cardOrID, options.name, "hero");
+            this.life = options.life;
+        } else if (typeof cardOrID === "object" && typeof id === "string") {
             // copy the card
-            super(cardOrID, newidOrOptions);
-            this.action = cardOrID.action;
+            super(cardOrID, id);
+            this.life = opts?.life ?? cardOrID.life;
         } else throw "Incorrect constructor";
     }
-
-    static isSpellCard(c: Card): c is SpellCard {
-        return c.type === "spell";
+    get uniqueData(): HeroCardData {
+        return { life: this.life };
+    }
+    set uniqueData(d: HeroCardData) {
+        this.life = d.life;
     }
 }
 
-type BossCardOptions = { name: string; life: number };
+// #endregion
 
-export class BossCard extends Card {
-    constructor(c: BossCard, newid: string, o?: Partial<BossCardOptions>);
-    constructor(id: string, options: BossCardOptions);
-    constructor(
-        cardOrID: string | BossCard,
-        newidOrOptions: string | BossCardOptions,
-        o?: Partial<BossCardOptions>
-    ) {
-        if (
-            typeof cardOrID === "string" &&
-            typeof newidOrOptions === "object"
-        ) {
-            // create new card
-            super(cardOrID, {
-                name: newidOrOptions.name,
-                life: newidOrOptions.life,
-                type: "boss",
-            });
-        } else if (
-            typeof cardOrID === "object" &&
-            typeof newidOrOptions === "string"
-        ) {
-            // copy the card
-            super(cardOrID, newidOrOptions, o);
-        } else throw "Incorrect constructor";
-    }
-}
+// #region DungeonCard
 
-export type TreasureType = "fight" | "holy" | "gold";
+export type DungeonCardData = z.infer<(typeof DungeonCard)["data"]>;
+type DungeonCardOptions = z.infer<(typeof DungeonCard)["options"]>;
 
-type DungeonCardOptions = {
-    name: string;
-    special?: true;
+export class DungeonCard extends Card<DungeonCardData> {
+    static data = object({
+        treasure: TreasureType,
+        damage: number(),
+        special: boolean(),
+    });
+    static options = object({
+        name: string(),
+        treasure: TreasureType,
+        special: optional(boolean()),
+        damage: number(),
+    });
+
     treasure: TreasureType;
-};
-
-export class DungeonCard extends Card {
-    treasure: TreasureType;
-    constructor(c: DungeonCard, newid: string);
+    damage: number;
+    special: boolean;
+    constructor(c: DungeonCard, newid: string, options?: DungeonCardData);
     constructor(id: string, options: DungeonCardOptions);
     constructor(
         cardOrID: string | DungeonCard,
-        newidOrOptions: string | DungeonCardOptions
+        id: string | DungeonCardOptions,
+        opts?: DungeonCardData
     ) {
-        if (
-            typeof cardOrID === "string" &&
-            typeof newidOrOptions === "object"
-        ) {
+        if (typeof cardOrID === "string" && typeof id === "object") {
             // create new card
-            super(cardOrID, {
-                name: newidOrOptions.name,
-                life: 0,
-                type: "dungeon",
-            });
-            this.treasure = newidOrOptions.treasure;
-        } else if (
-            typeof cardOrID === "object" &&
-            typeof newidOrOptions === "string"
-        ) {
+            super(cardOrID, id.name, "dungeon");
+            this.treasure = id.treasure;
+            this.special = !!id.special;
+            this.damage = id.damage;
+        } else if (typeof cardOrID === "object" && typeof id === "string") {
             // copy the card
-            super(cardOrID, newidOrOptions);
-            this.treasure = cardOrID.treasure;
+            super(cardOrID, id);
+            this.treasure = opts?.treasure ?? cardOrID.treasure;
+            this.special = opts?.special ?? cardOrID.special;
+            this.damage = opts?.damage ?? cardOrID.damage;
         } else throw "Incorrect constructor";
+    }
+
+    get uniqueData(): DungeonCardData {
+        return {
+            treasure: this.treasure,
+            special: this.special,
+            damage: this.damage,
+        };
+    }
+    set uniqueData(d: DungeonCardData) {
+        this.treasure = d.treasure;
+        this.special = d.special;
+        this.damage = d.damage;
+    }
+    static isDungeonCard(d: Card<any>): d is DungeonCard {
+        return d.type === "dungeon";
     }
 }
 
-type HeroCardOptions = { name: string; life: number };
+// #endregion
 
-export class HeroCard extends Card {
-    constructor(c: HeroCard, newid: string, o?: Partial<HeroCardOptions>);
-    constructor(id: string, options: HeroCardOptions);
+// #region SpellCard
+
+type SpellCardOptions = z.infer<(typeof SpellCard)["options"]>;
+
+export type SpellCardData = z.infer<(typeof SpellCard)["data"]>;
+
+export class SpellCard extends Card<SpellCardData> {
+    static data = object({
+        special: boolean(),
+    });
+    static options = object({
+        action: z.function().returns(z.void()),
+        name: z.string(),
+        special: z.optional(z.boolean()),
+    });
+
+    action: () => void;
+    special: boolean;
+
+    get uniqueData() {
+        return {
+            special: this.special,
+        };
+    }
+
+    set uniqueData(d: SpellCardData) {
+        this.special = d.special;
+    }
+
+    constructor(c: SpellCard, id: string, opts?: SpellCardData);
+    constructor(dbid: string, opts: SpellCardOptions);
     constructor(
-        cardOrID: string | HeroCard,
-        newidOrOptions: string | HeroCardOptions,
-        o?: Partial<HeroCardOptions>
+        cardOrID: string | SpellCard,
+        id: string | SpellCardOptions,
+        opts?: SpellCardData
     ) {
-        if (
-            typeof cardOrID === "string" &&
-            typeof newidOrOptions === "object"
-        ) {
+        if (typeof cardOrID === "string" && typeof id === "object") {
+            const options = id;
             // create new card
-            super(cardOrID, {
-                name: newidOrOptions.name,
-                life: newidOrOptions.life,
-                type: "hero",
-            });
-        } else if (
-            typeof cardOrID === "object" &&
-            typeof newidOrOptions === "string"
-        ) {
+            super(cardOrID, options.name, "spell");
+            this.special = !!options.special;
+            this.action = options.action;
+        } else if (typeof cardOrID === "object" && typeof id === "string") {
             // copy the card
-            super(cardOrID, newidOrOptions, o);
+            super(cardOrID, id);
+            this.action = cardOrID.action;
+            this.special = opts?.special ?? cardOrID.special;
         } else throw "Incorrect constructor";
     }
+
+    static isSpellCard(c: Card<any>): c is SpellCard {
+        return (
+            c.type === "spell" && SpellCard.data.safeParse(c.uniqueData).success
+        );
+    }
 }
+
+// #endregion
+
+// #region BossCard
+
+export type BossCardData = z.infer<(typeof BossCard)["data"]>;
+
+type BossCardOptions = z.infer<(typeof BossCard)["options"]>;
+
+export class BossCard extends Card<BossCardData> {
+    static data = object({
+        life: number().int(),
+    });
+    static options = object({
+        life: number().int(),
+        name: string(),
+    });
+
+    life: number;
+
+    constructor(c: BossCard, newid: string, o: BossCardData);
+    constructor(dbid: string, o: BossCardOptions);
+    constructor(
+        cardOrID: string | BossCard,
+        id: string | BossCardOptions,
+        opts?: BossCardData
+    ) {
+        if (typeof cardOrID === "string" && typeof id === "object") {
+            const options = id;
+            // create new card
+            super(cardOrID, options.name, "boss");
+            this.life = options.life;
+        } else if (typeof cardOrID === "object" && typeof id === "string") {
+            // copy the card
+            super(cardOrID, id);
+            this.life = opts?.life ?? cardOrID.life;
+        } else throw "Incorrect constructor";
+    }
+    get uniqueData(): BossCardData {
+        return { life: this.life };
+    }
+    set uniqueData(d: BossCardData) {
+        this.life = d.life;
+    }
+    static isBossCard(d: Card<any>): d is BossCard {
+        return d.type === "boss";
+    }
+}
+
+// #endregion
 
 export namespace Cards {
+    export type Type = BossCard | HeroCard | DungeonCard | SpellCard;
     export const bossCards: BossCard[] = [
-        new BossCard("boss1", { life: 5, name: "Boss 1" }),
+        new BossCard("boss1", { life: 5, name: "abc" }),
         new BossCard("boss2", { life: 5, name: "Boss 2" }),
         new BossCard("boss3", { life: 5, name: "Boss 3" }),
         new BossCard("boss4", { life: 8, name: "Boss 4" }),
@@ -243,17 +351,41 @@ export namespace Cards {
     ];
 
     export const dungCards: DungeonCard[] = [
-        new DungeonCard("dung1", { name: "Dung 1", treasure: "fight" }),
-        new DungeonCard("dung2", { name: "Dung 2", treasure: "holy" }),
-        new DungeonCard("dung3", { name: "Dung 3", treasure: "gold" }),
-        new DungeonCard("dung4", { name: "Dung 4", treasure: "gold" }),
-        new DungeonCard("dung5", { name: "Dung 5", treasure: "fight" }),
-        new DungeonCard("dung6", { name: "Dung 6", treasure: "holy" }),
+        new DungeonCard("dung1", {
+            name: "Dung 1",
+            treasure: "fight",
+            damage: 1,
+        }),
+        new DungeonCard("dung2", {
+            name: "Dung 2",
+            treasure: "holy",
+            damage: 1,
+        }),
+        new DungeonCard("dung3", {
+            name: "Dung 3",
+            treasure: "gold",
+            damage: 1,
+        }),
+        new DungeonCard("dung4", {
+            name: "Dung 4",
+            treasure: "gold",
+            damage: 1,
+        }),
+        new DungeonCard("dung5", {
+            name: "Dung 5",
+            treasure: "fight",
+            damage: 1,
+        }),
+        new DungeonCard("dung6", {
+            name: "Dung 6",
+            treasure: "holy",
+            damage: 1,
+        }),
     ];
 
     export const heroCards: HeroCard[] = [];
 
-    export const getCard = <T extends Card>(id: string): T => {
+    export const getCard = <T extends Type>(id: string): T => {
         const card = [
             ...bossCards,
             ...spellCards,

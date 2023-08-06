@@ -1,6 +1,6 @@
 import { addRoute, addSSERoute, startServer } from "./server";
 import { GameRoom, UserConnection as RoomConnection } from "./GameRoom";
-import { SSEResponse, UserSSEConnection } from "./utils";
+import { SSEResponse } from "./utils";
 import { Request } from "express";
 import { playerIDShape } from "../shared/events";
 

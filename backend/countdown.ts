@@ -16,6 +16,7 @@ export class Countdown {
     beforeFinish: () => void;
     getData: () => timerData;
     onAbort: (reason?: terminationReason) => void;
+    cleanup: (reason?: terminationReason) => void;
 
     finished = true;
 
@@ -27,6 +28,7 @@ export class Countdown {
             afterFinish?: () => void;
             beforeFinish?: () => void;
             onAbort?: () => void;
+            cleanup?: () => void;
         },
         getData: () => timerData
     ) {
@@ -37,6 +39,7 @@ export class Countdown {
         this.beforeFinish = finishes.beforeFinish || (() => {});
         this.onAbort = finishes.onAbort || (() => {});
         this.getData = getData;
+        this.cleanup = finishes.cleanup || (() => {});
     }
 
     start() {
@@ -72,10 +75,10 @@ export class Countdown {
             });
             this.afterFinish();
         }
+        this.cleanup();
     }
 
     abort(reason?: terminationReason) {
-        console.log("aborting because ", reason);
         if (this.finished) return;
         console.log("aborting countdown", this.type);
         this.end(false);

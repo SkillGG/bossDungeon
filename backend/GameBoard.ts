@@ -1,10 +1,9 @@
 import { randomInt } from "crypto";
-import { Card, DungeonCard, Cards } from "../shared/Cards/card";
+import { BossCard, Cards, DungeonCard, SpellCard } from "../shared/Cards/card";
 import { Deck } from "../shared/Cards/deck";
-import { UserConnection } from "./GameRoom";
 
 export class GameBoard {
-    _boss?: Card;
+    _boss?: BossCard;
 
     get boss() {
         if (!this._boss) throw "Boss not set yet!";
@@ -25,7 +24,7 @@ export class GameBoard {
         this._boss = this.getRandomCard(Cards.bossCards);
     }
 
-    getRandomCard<T extends Card>(cards: T[]) {
+    getRandomCard<T extends Cards.Type>(cards: T[]) {
         return cards[randomInt(cards.length)];
     }
 
@@ -36,6 +35,10 @@ export class GameBoard {
             for (let i = 0; i < 5; i++) {
                 const card = this.getRandomCard(Cards.dungCards);
                 deck.addCard(new DungeonCard(card, `${card.dbid}_${player}`));
+            }
+            for (let i = 0; i < 2; i++) {
+                const card = this.getRandomCard(Cards.spellCards);
+                deck.addCard(new SpellCard(card, `${card.dbid}_${player}`));
             }
         }
     }

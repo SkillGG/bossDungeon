@@ -30,11 +30,11 @@ export class RoomBoard extends StateManager<GameState> {
 
         this.pickBossTimer = new Label(
             "pickBossLabel",
-            new RectangleBounds(0, 15, Game.WIDTH, 0),
+            new RectangleBounds(0, 45, Game.WIDTH, 0),
             "",
             {
                 label: {
-                    font: "1.5em normal Arial",
+                    font: "normal 3em 'Lumanosimo', cursive",
                     textColor: theme.textColor,
                 },
             }
@@ -81,8 +81,8 @@ export class RoomBoard extends StateManager<GameState> {
         this.room.on("endCountdown", ({ data }) => {
             if (data.type === "pickBoss") {
                 const card = Card.fromString(data.boss.cardStr);
-                if (card.type !== "boss") return;
-                this.bossPicked(card);
+                console.log("bosscard", card, BossCard.isBossCard(card));
+                if (BossCard.isBossCard(card)) this.bossPicked(card);
             }
         });
         this.room.on("terminateCountdown", ({ reason }) => {

@@ -1,10 +1,6 @@
 import { UserSSEConnection } from "./utils";
 
-import {
-    UserSSEEvents,
-    terminationReason,
-    timerData,
-} from "./../shared/events";
+import { UserSSEEvents, terminationReason } from "./../shared/events";
 import { Countdown } from "./countdown";
 import { GameBoard } from "./GameBoard";
 
@@ -35,9 +31,11 @@ export class GameRoom {
 
     countdown?: Countdown;
 
-    countdowns: Map<string, Countdown> = new Map();
+    deckCountdowns: Map<string, Countdown> = new Map();
 
     constructor() {}
+
+    applyDeckChanges() {}
 
     drawPlayerDecks() {
         this.gameBoard.randomizePlayerDecks();
@@ -53,19 +51,22 @@ export class GameRoom {
                 30,
                 {
                     onAbort: (r?: terminationReason) => {
-                        this.countdowns.forEach((c) => {
+                        this.deckCountdowns.forEach((c) => {
                             c.abort(r);
                         });
                     },
                     afterFinish: () => {
-                        this.countdowns.delete(player);
+                        this.applyDeckChanges();
+                    },
+                    cleanup: () => {
+                        this.deckCountdowns.delete(player);
                     },
                 },
                 () => {
                     return { type: "deckSelection" };
                 }
             );
-            this.countdowns.set(player, countdown);
+            this.deckCountdowns.set(player, countdown);
             countdown.start();
         }
     }
@@ -132,7 +133,7 @@ export class GameRoom {
             type: "disconnect",
             playerid,
         };
-        this.countdowns.get(playerid)?.abort(termReason);
+        this.deckCountdowns.get(playerid)?.abort(termReason);
         if (this.countdown) {
             this.countdown.abort(termReason);
         }
@@ -159,6 +160,7 @@ export class GameRoom {
         UserConnection.emitToAll(this.openConnections)("unready", { playerid });
         if (this.countdown) {
             this.countdown.abort();
+            this.countdown = undefined;
         }
     }
 

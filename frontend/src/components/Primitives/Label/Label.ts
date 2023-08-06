@@ -141,7 +141,5 @@ export class Label
         }
         ctx.closePath();
     }
-    async update() {
-        if (this.text.includes("Pick")) console.log("update");
-    }
+    async update() {}
 }

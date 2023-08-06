@@ -22,7 +22,7 @@ export const cardDataShape = object({
 });
 
 export const deckDataShape = object({
-    deckStr: string().regex(Deck.stringRegex),
+    deckStr: string(),
 });
 
 export const timerData = discriminatedUnion("type", [

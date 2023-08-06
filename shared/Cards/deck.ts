@@ -1,7 +1,10 @@
-import { Card } from "./card";
+import { Card, Cards } from "./card";
+import { z } from "zod";
 
 export class Deck {
-    private cards: Card[] = [];
+    static fromStringData = z.array(z.string());
+
+    private cards: Cards.Type[] = [];
 
     constructor() {}
 
@@ -9,7 +12,7 @@ export class Deck {
         this.cards = this.cards.filter((c) => c.id !== id);
     }
 
-    addCard(c: Card) {
+    addCard(c: Cards.Type) {
         this.cards.push(c);
     }
 
@@ -18,17 +21,16 @@ export class Deck {
     }
 
     toString() {
-        return `${JSON.stringify(this.cards.map((c) => c.toString()))}`;
+        return JSON.stringify(this.cards.map((c) => c.toString()));
     }
 
     static fromString(s: string) {
         const deck = new Deck();
-        for (const [cardStr] of s.matchAll(Card.stringRegex)) {
+        const deckAsArray = JSON.parse(s);
+        for (const cardStr of Deck.fromStringData.parse(deckAsArray)) {
             const card = Card.fromString(cardStr);
             deck.addCard(card);
         }
         return deck;
     }
-
-    static stringRegex = new RegExp(`(?:(${Card.stringRegex.source});?)`, "gi");
 }
