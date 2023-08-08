@@ -11,7 +11,6 @@ import z, {
     optional,
 } from "zod";
 import { Card } from "./Cards/card";
-import { Deck } from "./Cards/deck";
 
 const event = tuple;
 
@@ -67,6 +66,8 @@ export const timerShape = object({
     ms: number().int(),
     type: timerType,
 });
+
+export type timerShape = z.infer<typeof timerShape>;
 
 export const roomDataShape = object({
     playersIn: record(string(), object({ ready: boolean() })),

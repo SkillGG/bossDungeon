@@ -1,6 +1,7 @@
 import { Game } from "../game";
 import { Updateable, Vector2, Vector_2 } from "../utils/utils";
 import { RectangleBounds } from "./Primitives/Rectangle/RectangleBounds";
+import { TriangleBounds } from "./Triangle/TriangleBounds";
 
 export const LEFT_MOUSE_BUTTON = 0;
 export const MIDDLE_MOUSE_BUTTON = 1;
@@ -52,12 +53,38 @@ export class InputManager implements Updateable {
         this._prevMousePostiion = [0, 0];
         this.mouseInputScale = { x: 1, y: 1 };
     }
-    isPointerIn(rect: RectangleBounds) {
-        const checkRect = new RectangleBounds(
-            Game.getRelativeVector(rect.getPosition()),
-            rect.getSize()
+    isPointerInRects(rects: RectangleBounds[]) {
+        const checkRects = rects.map(
+            (rect) =>
+                new RectangleBounds(
+                    Game.getRelativeVector(rect.getPosition()),
+                    rect.getSize()
+                )
         );
-        return checkRect.hasPoint(this.mousePosition);
+        return checkRects.reduce(
+            (p, n) => (p ? p : n.hasPoint(this.mousePosition)),
+            false
+        );
+    }
+    isPointerInTriangles(tris: TriangleBounds[]) {
+        const checkTris = tris.map(
+            (tri) =>
+                new TriangleBounds(
+                    Game.getRelativeVector_2(tri.a),
+                    Game.getRelativeVector_2(tri.b),
+                    Game.getRelativeVector_2(tri.c)
+                )
+        );
+        return checkTris.reduce(
+            (p, n) =>
+                p
+                    ? p
+                    : n.hasPoint({
+                          x: this.mousePosition[0],
+                          y: this.mousePosition[1],
+                      }),
+            false
+        );
     }
     hasMouseClicked(button: number) {
         return (

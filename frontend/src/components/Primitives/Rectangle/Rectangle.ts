@@ -1,4 +1,4 @@
-import { Hideable, Styled } from "../../../utils/utils";
+import { Hideable, Movable, Styled, Vector2 } from "../../../utils/utils";
 import { BoundedGameObject } from "../../GameObject";
 import { RectangleBounds } from "./RectangleBounds";
 
@@ -23,8 +23,8 @@ export const RectangleDefaultStyle: RectangleStyle = {
 };
 
 export class Rectangle
-    extends BoundedGameObject
-    implements Hideable, Styled<RectangleStyle>
+    extends BoundedGameObject<RectangleBounds>
+    implements Hideable, Styled<RectangleStyle>, Movable
 {
     style: RectangleStyle;
     initStyles: RectangleStyle;
@@ -34,9 +34,17 @@ export class Rectangle
         style?: Partial<RectangleStyle>,
         zIndex?: number
     ) {
-        super(id, bounds, zIndex);
+        super(id, [bounds], zIndex);
         this.style = { ...RectangleDefaultStyle, ...style };
         this.initStyles = { ...this.style };
+    }
+    moveBy(v: Vector2): void {
+        this.bounds[0].pos.x += v[0];
+        this.bounds[0].pos.y += v[1];
+    }
+    moveTo(v: Vector2): void {
+        this.bounds[0].pos.x = v[0];
+        this.bounds[0].pos.y = v[1];
     }
     clearStyles(): void {
         this.style = { ...this.initStyles };
@@ -51,19 +59,14 @@ export class Rectangle
     async update() {}
     async render(ctx: CanvasRenderingContext2D) {
         if (this.#hidden) return;
-        if (this.bounds.width * this.bounds.height === 0) return;
+        const { x, y, width: w, height: h } = this.bounds[0];
+        if (w * h === 0) return;
         ctx.beginPath();
         ctx.fillStyle = this.style.fillGradient ?? this.style.fillColor;
         ctx.strokeStyle = this.style.strokeGradient ?? this.style.strokeColor;
         ctx.lineWidth = this.style.strokeWidth;
-        ctx.rect(
-            this.bounds.x,
-            this.bounds.y,
-            this.bounds.width,
-            this.bounds.height
-        );
+        ctx.rect(x, y, w, h);
         if (this.style.shadow) {
-            console.log("shadow from", this.id);
             ctx.shadowBlur = this.style.shadow.blur;
             ctx.shadowColor = this.style.shadow.color;
             if (this.style.shadow.offsetX) {
@@ -79,6 +82,6 @@ export class Rectangle
     }
     intersects(bounds: RectangleBounds) {
         if (this.#hidden) return;
-        return this.bounds.intersects(bounds);
+        return this.bounds[0].intersects(bounds);
     }
 }

@@ -115,7 +115,7 @@ export class RectangleBounds {
             this.pos.x += posOrX.x;
             this.pos.y += posOrX.y;
         } else
-            throw `Incorrect parameters in setPosition! ${typeof posOrX},${typeof y}`;
+            throw `Incorrect parameters in moveBy! ${typeof posOrX},${typeof y}`;
     }
     intersects(r: RectangleBounds) {
         const r1 = new RectangleBounds(

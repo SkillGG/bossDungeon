@@ -5,6 +5,7 @@ import {
     Renderable,
     Updateable,
     Vector2,
+    Vector_2,
     denormalizeVector2RelativeToElement,
     normalizeVector2RelativeToElement,
 } from "./utils/utils";
@@ -33,6 +34,16 @@ export class Game<T extends string>
     }
 
     private static _instance: Game<any> | null = null;
+
+    static getRelativeVector_2(v: Vector_2): Vector_2 {
+        const grw = Game.getRelativeVector([v.x, v.y]);
+        return { x: grw[0], y: grw[1] };
+    }
+    
+    static getNormalVector_2(v: Vector_2): Vector_2 {
+        const grw = Game.getNormalVector([v.x, v.y]);
+        return { x: grw[0], y: grw[1] };
+    }
 
     static getRelativeVector(v: Vector2): Vector2 {
         return Game.instance.getRelativeVector(v);

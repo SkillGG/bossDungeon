@@ -66,16 +66,10 @@ export class GameMenu extends StateManager<GameState> {
                     ev.target.label.border.style.shadow.blur = 1;
                     ev.target.label.border.style.shadow.offsetY = 1;
                 }
-                ev.target.bounds.setPosition(
-                    ev.target.bounds.x,
-                    ev.target.bounds.y + 5
-                );
+                ev.target.moveBy([0, 5]);
             },
             onmouseup(ev) {
-                ev.target.bounds.setPosition(
-                    ev.target.bounds.x,
-                    ev.target.bounds.y - 5
-                );
+                ev.target.moveBy([0, -5]);
                 ev.target.label.border.style.shadow = undefined;
                 if (ev.target.isIn) {
                     ev.target.onCalls.onenter?.({

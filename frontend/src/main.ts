@@ -1,5 +1,6 @@
 import { GameSettings } from "./UI";
 import { FpsCounter } from "./components/FpsCounter/fpsCounter";
+import { RotatedRectangle } from "./components/Primitives/Rectangle/RotatedRectangle";
 import { SpriteLoader } from "./components/Primitives/Sprite/SpriteLoader";
 import { Game } from "./game";
 import { GameMenu } from "./game/Menu/menu";
@@ -27,8 +28,6 @@ export const theme = {
     textColor: "white",
     bgColor: "#1c1c1c",
 } as const;
-
-
 
 SpriteLoader.loadAllSprites().then(() => {
     const gameBox = document.querySelector("#board_container");

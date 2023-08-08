@@ -171,7 +171,7 @@ export class RoomLobby extends StateManager<GameState> {
 
     rearrangeLabels() {
         this.labels.forEach((e, i) => {
-            e.bounds = new RectangleBounds(250, 20 + 40 * i, 0, 0);
+            e.moveTo([250, 20 + 40 * i]);
         });
     }
 

@@ -5,7 +5,10 @@ import { RectangleBounds } from "../../Primitives/Rectangle/RectangleBounds";
 import { Sprite } from "../../Primitives/Sprite/Sprite";
 import { CanAnimate } from "../animation";
 
-export class AnimatedSprite extends BoundedGameObject implements CanAnimate {
+export class AnimatedSprite
+    extends BoundedGameObject<RectangleBounds>
+    implements CanAnimate
+{
     sprites: Sprite[];
     frameTick = 0;
     frame = 0;
@@ -26,7 +29,7 @@ export class AnimatedSprite extends BoundedGameObject implements CanAnimate {
         fps = 60,
         zIndex = oANIMATEDSPRITE_Z
     ) {
-        super(id, bounds, zIndex);
+        super(id, [bounds], zIndex);
         this.sprites = sprites;
         this.frameDelays = frameDelays;
         while (frameDelays.length < sprites.length) {
@@ -45,12 +48,13 @@ export class AnimatedSprite extends BoundedGameObject implements CanAnimate {
     async render(ctx: CanvasRenderingContext2D) {
         if (this.frame > this.sprites.length - 1) return;
         const sprite = this.sprites[this.frame];
+        const { x, y, width, height } = this.bounds[0];
         sprite.moveTo(
             new RectangleBounds(
-                this.bounds.x + this.offsetXY[0],
-                this.bounds.y + this.offsetXY[1],
-                this.bounds.width + this.offsetSize[0],
-                this.bounds.height + this.offsetSize[1]
+                x + this.offsetXY[0],
+                y + this.offsetXY[1],
+                width + this.offsetSize[0],
+                height + this.offsetSize[1]
             )
         );
         await sprite.render(ctx);

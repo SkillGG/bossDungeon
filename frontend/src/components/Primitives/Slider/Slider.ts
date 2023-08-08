@@ -10,7 +10,7 @@ export type SliderStyle = {
     borderWidth: number;
 };
 
-export class Slider extends BoundedGameObject implements Hideable {
+export class Slider extends BoundedGameObject<RectangleBounds> implements Hideable {
     current = 0;
 
     static readonly defaultStyle: SliderStyle = {
@@ -29,7 +29,7 @@ export class Slider extends BoundedGameObject implements Hideable {
         style: Partial<SliderStyle> = Slider.defaultStyle,
         zIndex = oSLIDER_Z
     ) {
-        super(id, bounds, zIndex);
+        super(id, [bounds], zIndex);
         this.style = { ...Slider.defaultStyle, ...style };
     }
 
@@ -39,7 +39,7 @@ export class Slider extends BoundedGameObject implements Hideable {
 
     async render(ctx: CanvasRenderingContext2D): Promise<void> {
         if (this.#hidden) return;
-        const { x, y, width: w, height: h } = this.bounds;
+        const { x, y, width: w, height: h } = this.bounds[0];
         //
 
         ctx.beginPath();

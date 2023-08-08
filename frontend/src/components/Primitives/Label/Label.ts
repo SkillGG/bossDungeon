@@ -1,4 +1,10 @@
-import { Hideable, Styled, getTextMeasures } from "../../../utils/utils";
+import {
+    Hideable,
+    Movable,
+    Styled,
+    Vector2,
+    getTextMeasures,
+} from "../../../utils/utils";
 import { BoundedGameObject } from "../../GameObject";
 import { RRectangle, RRectangleStyle } from "../Rectangle/RRectangle";
 import { RectangleStyle, Rectangle } from "../Rectangle/Rectangle";
@@ -40,8 +46,8 @@ export interface LabelTextStyle {
 }
 
 export class Label
-    extends BoundedGameObject
-    implements Hideable, Styled<LabelTextStyle>
+    extends BoundedGameObject<RectangleBounds>
+    implements Hideable, Styled<LabelTextStyle>, Movable
 {
     border: Rectangle | RRectangle;
     style: LabelTextStyle;
@@ -59,18 +65,28 @@ export class Label
         style?: LabelWithBorderStyle,
         zIndex?: number
     ) {
-        super(id, bounds, zIndex);
+        super(id, [bounds], zIndex);
         this.style = { ...Label.defaultStyle, ...style?.label };
         if (!style || !isRoundedStyle(style)) {
-            this.border = new Rectangle(`${id}_border`, this.bounds, {
+            this.border = new Rectangle(`${id}_border`, this.bounds[0], {
                 ...style?.border,
             });
         } else {
-            this.border = new RRectangle(`${id}_border`, this.bounds, {
+            this.border = new RRectangle(`${id}_border`, this.bounds[0], {
                 ...style?.border,
             });
         }
         this.initStyles = { ...this.style };
+    }
+    moveBy(v: Vector2): void {
+        this.border.moveBy(v);
+        this.bounds[0].pos.x += v[0];
+        this.bounds[0].pos.y += v[1];
+    }
+    moveTo(v: Vector2): void {
+        this.border.moveTo(v);
+        this.bounds[0].pos.x = v[0];
+        this.bounds[0].pos.y = v[1];
     }
 
     clearStyles() {
@@ -94,52 +110,58 @@ export class Label
     async render(ctx: CanvasRenderingContext2D) {
         if (this.#hidden) return;
         await this.border.render(ctx);
+        console.log(this.bounds);
+        const { x, y, width: w, height: h } = this.bounds[0];
         ctx.beginPath();
         ctx.font = this.style.font;
         const textBounds = getTextMeasures(ctx, this.text);
         const textWidth = textBounds.width;
         const textHeight = textBounds.height;
-        const boundHeight = this.bounds.height || textHeight;
-        const boundWidth = this.bounds.width || textWidth;
+        const boundHeight = h || textHeight;
+        const boundWidth = w || textWidth;
         const textX =
             this.style.halign === "left"
-                ? this.bounds.x
+                ? x
                 : this.style.halign === "right"
-                ? this.bounds.x + this.bounds.width - textWidth
-                : this.bounds.x + (boundWidth - textWidth) / 2;
+                ? x + w - textWidth
+                : x + (boundWidth - textWidth) / 2;
         const textY =
             this.style.valign === "top"
-                ? this.bounds.y + textBounds.ascent
+                ? y + textBounds.ascent
                 : this.style.valign === "bottom"
-                ? this.bounds.y + this.bounds.height - textBounds.descent
-                : this.bounds.y +
-                  (boundHeight + textHeight) / 2 -
-                  textBounds.descent;
+                ? y + h - textBounds.descent
+                : y + (boundHeight + textHeight) / 2 - textBounds.descent;
         ctx.fillStyle = this.style.textColor;
         ctx.fillText(
             this.text,
             textX,
             textY,
-            this.bounds.width
-                ? this.bounds.width - this.border.style.strokeWidth * 2
-                : undefined
+            w ? w - this.border.style.strokeWidth * 2 : undefined
         );
-        if (this.style.textStroke) {
-            ctx.strokeStyle =
-                typeof this.style.textStroke.color === "function"
-                    ? this.style.textStroke.color(ctx, this.bounds)
-                    : this.style.textStroke.color;
-            ctx.lineWidth = this.style.textStroke.width;
+        const strokeColor = this.getStroke(ctx);
+        if (strokeColor) {
+            ctx.strokeStyle = strokeColor.color;
+            ctx.lineWidth = strokeColor.width;
             ctx.strokeText(
                 this.text,
                 textX,
                 textY,
-                this.bounds.width
-                    ? this.bounds.width - this.border.style.strokeWidth * 2
-                    : undefined
+                w ? w - this.border.style.strokeWidth * 2 : undefined
             );
         }
         ctx.closePath();
     }
+
+    getStroke(ctx: CanvasRenderingContext2D) {
+        if (!this.style.textStroke) return undefined;
+        return {
+            color:
+                typeof this.style.textStroke.color === "function"
+                    ? this.style.textStroke.color(ctx, this.bounds[0])
+                    : this.style.textStroke.color,
+            width: this.style.textStroke.width,
+        };
+    }
+
     async update() {}
 }

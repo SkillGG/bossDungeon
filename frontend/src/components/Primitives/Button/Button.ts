@@ -1,5 +1,5 @@
 import { Game } from "../../../game";
-import { Vector2, Hideable, Styled } from "../../../utils/utils";
+import { Vector2, Hideable, Styled, Movable } from "../../../utils/utils";
 import { BoundedGameObject } from "../../GameObject";
 import { LEFT_MOUSE_BUTTON, RIGHT_MOUSE_BUTTON } from "../../KeyboardManager";
 import { LabelWithBorderStyle, Label } from "../Label/Label";
@@ -25,8 +25,8 @@ export interface ButtonOnCalls {
 }
 
 export class Button
-    extends BoundedGameObject
-    implements Hideable, Styled<LabelWithBorderStyle>
+    extends BoundedGameObject<RectangleBounds>
+    implements Hideable, Styled<LabelWithBorderStyle>, Movable
 {
     label: Label;
     onCalls: ButtonOnCalls;
@@ -38,9 +38,16 @@ export class Button
         style?: ButtonStyle,
         zIndex?: number
     ) {
-        super(id, bounds, zIndex);
+        super(id, [bounds], zIndex);
         this.onCalls = on;
         this.label = new Label(`${id}_label`, bounds, label, style);
+    }
+    moveBy(v: Vector2): void {
+        this.bounds[0].moveBy(v);
+    }
+    moveTo(v: Vector2): void {
+        this.bounds[0].pos.x = v[0];
+        this.bounds[0].pos.y = v[1];
     }
     get style() {
         return { label: this.label.style };
@@ -69,7 +76,7 @@ export class Button
         if (this.#hidden) return;
         const { _mousePosition: mousePos } = Game.input;
         const MouseEvent = { mousePos, target: this };
-        if (Game.input.isPointerIn(this.bounds)) {
+        if (Game.input.isPointerInRects(this.bounds)) {
             if (this.isIn === false) this.onCalls.onenter?.(MouseEvent);
             this.isIn = true;
         } else {

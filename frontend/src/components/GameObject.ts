@@ -1,6 +1,6 @@
-import { Game } from "../game";
 import { Updateable, Renderable } from "../utils/utils";
 import { RectangleBounds } from "./Primitives/Rectangle/RectangleBounds";
+import { TriangleBounds } from "./Triangle/TriangleBounds";
 
 export abstract class GameObject implements Updateable, Renderable {
     id: string;
@@ -18,15 +18,12 @@ export abstract class GameObject implements Updateable, Renderable {
     abstract update(time: number): Promise<void>;
 }
 
-export abstract class BoundedGameObject extends GameObject {
-    bounds: RectangleBounds;
-    constructor(id: string, bounds: RectangleBounds, zIndex?: number) {
+export abstract class BoundedGameObject<
+    T extends RectangleBounds | TriangleBounds
+> extends GameObject {
+    bounds: T[];
+    constructor(id: string, bounds: T[], zIndex?: number) {
         super(id, zIndex);
         this.bounds = bounds;
-    }
-    getRelativeBounds() {
-        if (!Game.instance) throw "GameObject created outside of a game!";
-        const relV = Game.getRelativeVector(this.bounds.getPosition());
-        return { ...this.bounds, x: relV[0], y: relV[1] };
     }
 }

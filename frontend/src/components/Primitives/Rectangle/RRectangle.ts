@@ -1,4 +1,4 @@
-import { Hideable, Styled } from "../../../utils/utils";
+import { Hideable, Movable, Styled, Vector2 } from "../../../utils/utils";
 import { BoundedGameObject } from "../../GameObject";
 import { RectangleBounds } from "./RectangleBounds";
 
@@ -31,8 +31,8 @@ export const RectangleDefaultStyle: RRectangleStyle = {
 };
 
 export class RRectangle
-    extends BoundedGameObject
-    implements Hideable, Styled<RRectangleStyle>
+    extends BoundedGameObject<RectangleBounds>
+    implements Hideable, Styled<RRectangleStyle>, Movable
 {
     style: RRectangleStyle;
     initStyles: RRectangleStyle;
@@ -45,9 +45,17 @@ export class RRectangle
         style?: Partial<RRectangleStyle>,
         zIndex?: number
     ) {
-        super(id, bounds, zIndex);
+        super(id, [bounds], zIndex);
         this.style = { ...RectangleDefaultStyle, ...style };
         this.initStyles = { ...this.style };
+    }
+    moveBy(v: Vector2): void {
+        this.bounds[0].pos.x += v[0];
+        this.bounds[0].pos.y += v[1];
+    }
+    moveTo(v: Vector2): void {
+        this.bounds[0].pos.x = v[0];
+        this.bounds[0].pos.y = v[1];
     }
     #hidden = false;
     hide(): void {
@@ -59,21 +67,17 @@ export class RRectangle
     async update() {}
     async render(ctx: CanvasRenderingContext2D) {
         if (this.#hidden) return;
-        if (this.bounds.width * this.bounds.height === 0) return;
+        const { x, y, width: w, height: h } = this.bounds[0];
+        if (w * h === 0) return;
         ctx.beginPath();
         ctx.fillStyle =
-            this.style.fillGradient?.(ctx, this.bounds) ?? this.style.fillColor;
+            this.style.fillGradient?.(ctx, this.bounds[0]) ??
+            this.style.fillColor;
         ctx.strokeStyle =
-            this.style.strokeGradient?.(ctx, this.bounds) ??
+            this.style.strokeGradient?.(ctx, this.bounds[0]) ??
             this.style.strokeColor;
         ctx.lineWidth = this.style.strokeWidth;
-        ctx.roundRect(
-            this.bounds.x,
-            this.bounds.y,
-            this.bounds.width,
-            this.bounds.height,
-            this.style.radii
-        );
+        ctx.roundRect(x, y, w, h, this.style.radii);
         if (this.style.shadow) {
             ctx.shadowBlur = this.style.shadow.blur;
             ctx.shadowColor = this.style.shadow.color;
@@ -90,6 +94,6 @@ export class RRectangle
     }
     intersects(bounds: RectangleBounds) {
         if (this.#hidden) return;
-        return this.bounds.intersects(bounds);
+        return this.bounds[0].intersects(bounds);
     }
 }

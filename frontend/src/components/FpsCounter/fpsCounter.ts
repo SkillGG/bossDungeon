@@ -67,13 +67,11 @@ export class FpsCounter extends GameObject {
         this.fps.text = "FPS: " + this.getAverageFPS();
         if (this.#firstRender) {
             this.#firstRender = false;
-            this.fps.bounds.moveBy(
+            this.fps.moveBy([
                 0,
                 getTextMeasuresWithFont(this.fps.style.font, this.version.text)
-                    .height +
-                    getTextMeasuresWithFont(this.fps.style.font, this.fps.text)
-                        .height
-            );
+                    .height,
+            ]);
         }
         await this.fps.render(ctx);
         await this.version.render(ctx);

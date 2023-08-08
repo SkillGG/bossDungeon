@@ -4,11 +4,13 @@ import { Label } from "../../components/Primitives/Label/Label";
 import { RectangleBounds } from "../../components/Primitives/Rectangle/RectangleBounds";
 import { oCARD_Z } from "../../utils/zLayers";
 
-export abstract class GameCard<T extends Cards.Type> extends BoundedGameObject {
+export abstract class GameCard<
+    T extends Cards.Type
+> extends BoundedGameObject<RectangleBounds> {
     card: T;
 
     constructor(card: T, bounds: RectangleBounds, zIndex = oCARD_Z) {
-        super(`card_${card.id}`, bounds, zIndex);
+        super(`card_${card.id}`, [bounds], zIndex);
         this.card = card;
     }
 
@@ -64,7 +66,7 @@ export class BossGameCard extends GameCard<BossCard> {
     }
 
     async render(ctx: CanvasRenderingContext2D): Promise<void> {
-        const { x, y, width: w, height: h } = this.bounds;
+        const { x, y, width: w, height: h } = this.bounds[0];
 
         ctx.beginPath();
 

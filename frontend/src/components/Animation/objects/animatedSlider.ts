@@ -33,7 +33,7 @@ export class AnimatedSlider extends Slider {
 
     async render(ctx: CanvasRenderingContext2D): Promise<void> {
         if (this.#hidden) return;
-        const { x, y, width: w, height: h } = this.bounds;
+        const { x, y, width: w, height: h } = this.bounds[0];
         ctx.beginPath();
         ctx.roundRect(x, y, w, h, 5);
         ctx.fillStyle = this.style.bgColor;

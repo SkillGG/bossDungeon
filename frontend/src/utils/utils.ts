@@ -1,12 +1,6 @@
 // #region Math
 
-import {
-    endTimerShape,
-    playerIDShape,
-    roomDataShape,
-    terminateTimerShape,
-    timerShape,
-} from "../../../shared/events";
+import { endTimerShape, playerIDShape, roomDataShape, terminateTimerShape, timerShape } from "../../../shared/events";
 
 export type Vector2 = [number, number];
 export type Vector3 = [number, number, number];
@@ -272,6 +266,10 @@ export interface Renderable {
 export interface Hideable {
     hide(): void;
     show(): void;
+}
+export interface Movable {
+    moveBy(v: Vector2): void;
+    moveTo(v: Vector2): void;
 }
 
 export interface Styled<T extends object> {
