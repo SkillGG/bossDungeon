@@ -1,27 +1,32 @@
+import { timerShape } from "../events";
 import { Card, Cards } from "./card";
 import { z } from "zod";
 
 export class Deck {
     static fromStringData = z.array(z.string());
 
-    private cards: Cards.Type[] = [];
+    private _cards: Cards.Type[] = [];
 
     constructor() {}
 
     discardCard(id: string) {
-        this.cards = this.cards.filter((c) => c.id !== id);
+        this._cards = this._cards.filter((c) => c.id !== id);
     }
 
     addCard(c: Cards.Type) {
-        this.cards.push(c);
+        this._cards.push(c);
     }
 
     clearDeck() {
-        this.cards = [];
+        this._cards = [];
     }
 
     toString() {
-        return JSON.stringify(this.cards.map((c) => c.toString()));
+        return JSON.stringify(this._cards.map((c) => c.toString()));
+    }
+
+    get cards(): readonly Cards.Type[] {
+        return this._cards as readonly Cards.Type[];
     }
 
     static fromString(s: string) {

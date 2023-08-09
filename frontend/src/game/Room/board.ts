@@ -1,12 +1,19 @@
-import { BossCard, Card } from "../../../../shared/Cards/card";
+import {
+    BossCard,
+    Card,
+    DungeonCard,
+    SpellCard,
+} from "../../../../shared/Cards/card";
 import { Deck } from "../../../../shared/Cards/deck";
 import { ObjectManager } from "../../components/ObjectManager";
 import { Label } from "../../components/Primitives/Label/Label";
 import { RectangleBounds } from "../../components/Primitives/Rectangle/RectangleBounds";
+import { RotatedRectangleBounds } from "../../components/Primitives/Rectangle/RotatedRectangleBounds";
 import { StateManager } from "../../components/StateManager";
 import { Game } from "../../game";
 import { GameState, theme } from "../../main";
-import { BossGameCard } from "./card";
+import { CardDeck } from "./CardDeck";
+import { BossGameCard } from "./GameCards/bossGameCard";
 import { RoomLobby } from "./lobby";
 import { Room } from "./room";
 
@@ -20,7 +27,11 @@ export class RoomBoard extends StateManager<GameState> {
 
     boss?: BossCard;
 
+    selectionDeck?: CardDeck;
+
     bossCard?: BossGameCard;
+
+    // deckSelection: CardDeck;
 
     pickBossTimer: Label;
 
@@ -66,7 +77,19 @@ export class RoomBoard extends StateManager<GameState> {
             } else if (typeof data === "object") {
                 if (data.type === "deckSelection") {
                     const gameDeck = Deck.fromString(data.deck.deckStr);
-                    console.log("deck", gameDeck);
+                    this.selectionDeck = new CardDeck(
+                        "scd",
+                        new RectangleBounds(0, 0, Game.WIDTH, Game.HEIGHT),
+                        0
+                    );
+                    for (const card of gameDeck.cards) {
+                        if (SpellCard.isSpellCard(card)) {
+                            this.selectionDeck.addSpellCard(card);
+                        } else if (DungeonCard.isDungeonCard(card)) {
+                            this.selectionDeck.addDungeonCard(card);
+                        }
+                    }
+                    this.registerObject(this.selectionDeck);
                 }
             }
         });
@@ -115,7 +138,10 @@ export class RoomBoard extends StateManager<GameState> {
         this.boss = boss;
         this.bossCard = new BossGameCard(
             boss,
-            new RectangleBounds(100, 100, 200, 100)
+            RotatedRectangleBounds.fromRectangleBounds(
+                new RectangleBounds(100, 100, 200, 100),
+                0
+            )
         );
         this.add(this.bossCard);
         this.registerObject(this.bossCard);

@@ -29,7 +29,7 @@ export class AnimatedSprite
         fps = 60,
         zIndex = oANIMATEDSPRITE_Z
     ) {
-        super(id, [bounds], zIndex);
+        super(id, bounds, zIndex);
         this.sprites = sprites;
         this.frameDelays = frameDelays;
         while (frameDelays.length < sprites.length) {
@@ -48,7 +48,7 @@ export class AnimatedSprite
     async render(ctx: CanvasRenderingContext2D) {
         if (this.frame > this.sprites.length - 1) return;
         const sprite = this.sprites[this.frame];
-        const { x, y, width, height } = this.bounds[0];
+        const { x, y, width, height } = this.bounds;
         sprite.moveTo(
             new RectangleBounds(
                 x + this.offsetXY[0],

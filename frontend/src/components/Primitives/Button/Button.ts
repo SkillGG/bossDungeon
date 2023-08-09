@@ -38,16 +38,16 @@ export class Button
         style?: ButtonStyle,
         zIndex?: number
     ) {
-        super(id, [bounds], zIndex);
+        super(id, bounds, zIndex);
         this.onCalls = on;
         this.label = new Label(`${id}_label`, bounds, label, style);
     }
     moveBy(v: Vector2): void {
-        this.bounds[0].moveBy(v);
+        this.bounds.moveBy(v);
     }
     moveTo(v: Vector2): void {
-        this.bounds[0].pos.x = v[0];
-        this.bounds[0].pos.y = v[1];
+        this.bounds.pos.x = v[0];
+        this.bounds.pos.y = v[1];
     }
     get style() {
         return { label: this.label.style };

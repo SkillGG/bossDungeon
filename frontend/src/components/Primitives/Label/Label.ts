@@ -65,14 +65,14 @@ export class Label
         style?: LabelWithBorderStyle,
         zIndex?: number
     ) {
-        super(id, [bounds], zIndex);
+        super(id, bounds, zIndex);
         this.style = { ...Label.defaultStyle, ...style?.label };
         if (!style || !isRoundedStyle(style)) {
-            this.border = new Rectangle(`${id}_border`, this.bounds[0], {
+            this.border = new Rectangle(`${id}_border`, this.bounds, {
                 ...style?.border,
             });
         } else {
-            this.border = new RRectangle(`${id}_border`, this.bounds[0], {
+            this.border = new RRectangle(`${id}_border`, this.bounds, {
                 ...style?.border,
             });
         }
@@ -80,13 +80,13 @@ export class Label
     }
     moveBy(v: Vector2): void {
         this.border.moveBy(v);
-        this.bounds[0].pos.x += v[0];
-        this.bounds[0].pos.y += v[1];
+        this.bounds.pos.x += v[0];
+        this.bounds.pos.y += v[1];
     }
     moveTo(v: Vector2): void {
         this.border.moveTo(v);
-        this.bounds[0].pos.x = v[0];
-        this.bounds[0].pos.y = v[1];
+        this.bounds.pos.x = v[0];
+        this.bounds.pos.y = v[1];
     }
 
     clearStyles() {
@@ -110,8 +110,7 @@ export class Label
     async render(ctx: CanvasRenderingContext2D) {
         if (this.#hidden) return;
         await this.border.render(ctx);
-        console.log(this.bounds);
-        const { x, y, width: w, height: h } = this.bounds[0];
+        const { x, y, width: w, height: h } = this.bounds;
         ctx.beginPath();
         ctx.font = this.style.font;
         const textBounds = getTextMeasures(ctx, this.text);
@@ -157,7 +156,7 @@ export class Label
         return {
             color:
                 typeof this.style.textStroke.color === "function"
-                    ? this.style.textStroke.color(ctx, this.bounds[0])
+                    ? this.style.textStroke.color(ctx, this.bounds)
                     : this.style.textStroke.color,
             width: this.style.textStroke.width,
         };

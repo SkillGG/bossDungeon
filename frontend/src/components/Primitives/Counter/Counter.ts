@@ -48,7 +48,7 @@ export class Counter
         counterOptions: CounterOptions,
         zIndex = oCOUNTER_Z
     ) {
-        super(id, [bounds], zIndex);
+        super(id, bounds, zIndex);
         this.options = counterOptions;
         this.initStyles = { ...this.style };
         this.textLabel = new Label(
@@ -96,7 +96,7 @@ export class Counter
 
     async render(ctx: CanvasRenderingContext2D): Promise<void> {
         if (this.#hidden) return;
-        const { x, y, width: w, height: h } = this.bounds[0];
+        const { x, y, width: w, height: h } = this.bounds;
 
         ctx.beginPath();
         ctx.fillStyle = this.style.arcColor;

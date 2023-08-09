@@ -29,7 +29,7 @@ export class Slider extends BoundedGameObject<RectangleBounds> implements Hideab
         style: Partial<SliderStyle> = Slider.defaultStyle,
         zIndex = oSLIDER_Z
     ) {
-        super(id, [bounds], zIndex);
+        super(id, bounds, zIndex);
         this.style = { ...Slider.defaultStyle, ...style };
     }
 
@@ -39,7 +39,7 @@ export class Slider extends BoundedGameObject<RectangleBounds> implements Hideab
 
     async render(ctx: CanvasRenderingContext2D): Promise<void> {
         if (this.#hidden) return;
-        const { x, y, width: w, height: h } = this.bounds[0];
+        const { x, y, width: w, height: h } = this.bounds;
         //
 
         ctx.beginPath();

@@ -1,86 +1,37 @@
-import { BossCard, Cards } from "../../../../shared/Cards/card";
-import { BoundedGameObject } from "../../components/GameObject";
+import { Cards } from "../../../../shared/Cards/card";
 import { Label } from "../../components/Primitives/Label/Label";
-import { RectangleBounds } from "../../components/Primitives/Rectangle/RectangleBounds";
+import { RotatedRectangle } from "../../components/Primitives/Rectangle/RotatedRectangle";
+import { RotatedRectangleBounds } from "../../components/Primitives/Rectangle/RotatedRectangleBounds";
 import { oCARD_Z } from "../../utils/zLayers";
 
-export abstract class GameCard<
-    T extends Cards.Type
-> extends BoundedGameObject<RectangleBounds> {
+export abstract class GameCard<T extends Cards.Type> extends RotatedRectangle {
     card: T;
 
-    constructor(card: T, bounds: RectangleBounds, zIndex = oCARD_Z) {
-        super(`card_${card.id}`, [bounds], zIndex);
+    labels: Label[] = [];
+
+    constructor(card: T, bounds: RotatedRectangleBounds, zIndex = oCARD_Z) {
+        super(`card_${card.id}`, bounds, {}, zIndex);
         this.card = card;
     }
 
-    abstract update(): Promise<void>;
-
-    abstract render(ctx: CanvasRenderingContext2D): Promise<void>;
-}
-
-export class BossGameCard extends GameCard<BossCard> {
-    nameLabel: Label;
-    lifeLabel: Label;
-    constructor(card: BossCard, bounds: RectangleBounds, zIndex = oCARD_Z) {
-        super(card, bounds, zIndex);
-        const { x, y, width: w, height: h } = bounds;
-        this.nameLabel = new Label(
-            `card_${card.id}_label`,
-            new RectangleBounds(x, y, w, 25),
-            card.name,
-            {
-                label: {
-                    font: "1em normal Arial",
-                },
-            }
-        );
-        const lifePadding = 5;
-        this.lifeLabel = new Label(
-            `card_${card.id}_life`,
-            new RectangleBounds(
-                x + lifePadding,
-                y + lifePadding,
-                w - lifePadding * 2,
-                h - lifePadding * 2
-            ),
-            `${card.life}`,
-            {
-                label: {
-                    font: "1.1em normal Arial",
-                    halign: "right",
-                    valign: "bottom",
-                },
-                border: {
-                    strokeColor: "transparent",
-                },
-            }
-        );
+    async renderLabels(ctx: CanvasRenderingContext2D): Promise<void> {
+        ctx.save();
+        const rB = this.bounds.getRectangleBounds();
+        ctx.rect(rB.x, rB.y, rB.width, rB.height);
+        ctx.clip();
+        ctx.translate(this.ax, this.ay);
+        ctx.rotate(this.radAngle);
+        for (const l of this.labels) {
+            await l.render(ctx);
+        }
+        ctx.restore();
     }
 
     async update(): Promise<void> {
-        this.nameLabel.update();
-        this.lifeLabel.update();
-        this.nameLabel.text = this.card.name;
-        this.lifeLabel.text = `${this.card.life}`;
+        await super.update();
     }
 
     async render(ctx: CanvasRenderingContext2D): Promise<void> {
-        const { x, y, width: w, height: h } = this.bounds[0];
-
-        ctx.beginPath();
-
-        if (this.card.type === "boss") {
-            ctx.fillStyle = "#ce1121cc";
-            ctx.fillRect(x, y, w, h);
-            ctx.strokeStyle = "black";
-            ctx.lineWidth = 4;
-            ctx.strokeRect(x, y, w, h);
-        }
-
-        this.nameLabel.render(ctx);
-        this.lifeLabel.render(ctx);
-
-        ctx.closePath();
+        await super.render(ctx);
     }
 }

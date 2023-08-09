@@ -1,5 +1,5 @@
-import { Vector2, Vector_2 } from "../../utils/utils";
-import { RectangleBounds } from "../Primitives/Rectangle/RectangleBounds";
+import { Vector2, Vector_2 } from "../../../utils/utils";
+import { RectangleBounds } from "../Rectangle/RectangleBounds";
 
 export class TriangleBounds {
     static get zero() {
@@ -94,14 +94,66 @@ export class TriangleBounds {
         return !(has_neg && has_pos);
     }
 
-    moveTo(v: Vector_2) {
-        throw new Error("Triangle.moveTo not implemented yet!");
+    movingAnchor: "a" | "b" | "c" = "a";
+
+    moveToWithAnchor(_v: Vector_2) {
+        const getDelta = (p: Vector_2, p2: Vector_2): Vector_2 => {
+            return {
+                x: p.x - p2.x,
+                y: p.y - p2.y,
+            };
+        };
+        switch (this.movingAnchor) {
+            case "a":
+                {
+                    const dB = getDelta(this.a, this.b);
+                    const dC = getDelta(this.a, this.c);
+                    this.a = _v;
+                    this.b = { x: _v.x + dB.x, y: _v.y + dB.y };
+                    this.c = { x: _v.x + dC.x, y: _v.y + dC.y };
+                }
+                break;
+            case "b":
+                {
+                    const dA = getDelta(this.b, this.a);
+                    const dC = getDelta(this.b, this.c);
+                    this.b = _v;
+                    this.a = { x: _v.x + dA.x, y: _v.y + dA.y };
+                    this.c = { x: _v.x + dC.x, y: _v.y + dC.y };
+                }
+                break;
+            case "c":
+                {
+                    const dA = getDelta(this.c, this.a);
+                    const dB = getDelta(this.c, this.b);
+                    this.c = _v;
+                    this.a = { x: _v.x + dA.x, y: _v.y + dA.y };
+                    this.b = { x: _v.x + dB.x, y: _v.y + dB.y };
+                }
+                break;
+        }
+    }
+
+    moveTo(pos: Vector_2): void;
+    moveTo(pos: Vector2): void;
+    moveTo(x: number, y: number): void;
+    moveTo(posOrX: Vector2 | Vector_2 | number, y?: number): void {
+        if (typeof posOrX === "number" && typeof y === "number") {
+            this.moveToWithAnchor({ x: posOrX, y });
+        } else if (Array.isArray(posOrX)) {
+            const [x, y] = posOrX;
+            this.moveToWithAnchor({ x, y });
+        } else if (typeof posOrX !== "number") {
+            this.moveToWithAnchor(posOrX);
+        } else
+            throw `Incorrect parameters in moveBy! ${typeof posOrX},${typeof y}`;
     }
 
     moveBy(pos: Vector_2): void;
     moveBy(pos: Vector2): void;
     moveBy(x: number, y: number): void;
     moveBy(posOrX: Vector2 | Vector_2 | number, y?: number): void {
+        console.log("moving triangle", this.a, this.b, this.c, posOrX);
         if (typeof posOrX === "number" && typeof y === "number") {
             this.a.x += posOrX;
             this.a.y += y;

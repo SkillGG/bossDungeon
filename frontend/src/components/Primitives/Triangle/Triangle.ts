@@ -1,5 +1,5 @@
-import { Hideable, Movable, Styled, Vector2 } from "../../utils/utils";
-import { BoundedGameObject } from "../GameObject";
+import { Hideable, Movable, Styled, Vector2 } from "../../../utils/utils";
+import { BoundedGameObject } from "../../GameObject";
 import { TriangleBounds } from "./TriangleBounds";
 
 export interface TriangleStyle {
@@ -32,7 +32,7 @@ export class Triangle
         style: Partial<TriangleStyle>,
         zIndex: number = 0
     ) {
-        super(id, [bounds], zIndex);
+        super(id, bounds, zIndex);
         this.style = {
             ...TriangleDefaultStyle,
             ...style,
@@ -44,10 +44,10 @@ export class Triangle
         };
     }
     moveBy(v: Vector2): void {
-        this.bounds[0].moveBy({ x: v[0], y: v[1] });
+        this.bounds.moveBy({ x: v[0], y: v[1] });
     }
     moveTo(v: Vector2): void {
-        this.bounds[0].moveTo({ x: v[0], y: v[1] });
+        this.bounds.moveTo({ x: v[0], y: v[1] });
     }
 
     #hidden = false;
@@ -66,7 +66,7 @@ export class Triangle
     async render(ctx: CanvasRenderingContext2D): Promise<void> {
         if (this.#hidden) return;
         ctx.beginPath();
-        const { a, b, c } = this.bounds[0];
+        const { a, b, c } = this.bounds;
 
         ctx.moveTo(a.x, a.y);
         ctx.lineTo(b.x, b.y);

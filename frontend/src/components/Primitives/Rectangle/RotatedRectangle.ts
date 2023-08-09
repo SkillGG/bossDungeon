@@ -1,6 +1,7 @@
+import { theme } from "../../../main";
 import { Hideable, Movable, Styled, Vector2 } from "../../../utils/utils";
 import { BoundedGameObject } from "../../GameObject";
-import { TriangleBounds } from "../../Triangle/TriangleBounds";
+import { RotatedRectangleBounds } from "./RotatedRectangleBounds";
 
 export interface RotatedRectangleStyle {
     fillColor: string;
@@ -23,56 +24,29 @@ export const RotatedRectangleDefaultStyle: RotatedRectangleStyle = {
 };
 
 export class RotatedRectangle
-    extends BoundedGameObject<TriangleBounds>
+    extends BoundedGameObject<RotatedRectangleBounds>
     implements Hideable, Styled<RotatedRectangleStyle>, Movable
 {
     constructor(
         id: string,
-        bounds: {
-            a: Vector2;
-            b: Vector2;
-            d: Vector2;
-        },
+        bounds: RotatedRectangleBounds,
         styles?: Partial<RotatedRectangleStyle>,
         zIndex = 0
     ) {
-        // A - B
-        // | / |
-        // C - D
-
-        const a = bounds.a;
-        const b = bounds.b;
-        const c: Vector2 = [
-            bounds.b[0] + bounds.d[0],
-            bounds.b[1] + bounds.d[1],
-        ];
-        const d: Vector2 = [
-            bounds.a[0] + bounds.d[0],
-            bounds.a[1] + bounds.d[1],
-        ];
-
-        super(
-            id,
-            [new TriangleBounds(a, b, c), new TriangleBounds(c, a, d)],
-            zIndex
-        );
+        super(id, bounds, zIndex);
         this.style = { ...RotatedRectangleDefaultStyle, ...styles };
         this.initStyles = { ...this.style };
     }
-
+    debug = false;
     async render(ctx: CanvasRenderingContext2D): Promise<void> {
         if (this.#hidden) return;
         ctx.beginPath();
-        const { x: ax, y: ay } = this.bounds[0].a;
-        const { x: bx, y: by } = this.bounds[0].b;
-        const { x: cx, y: cy } = this.bounds[0].c;
-        const { x: dx, y: dy } = this.bounds[1].c;
         const drawShape = () => {
-            ctx.moveTo(ax, ay);
-            ctx.lineTo(bx, by);
-            ctx.lineTo(cx, cy);
-            ctx.lineTo(dx, dy);
-            ctx.lineTo(ax, ay);
+            ctx.moveTo(this.ax, this.ay);
+            ctx.lineTo(this.bx, this.by);
+            ctx.lineTo(this.dx, this.dy);
+            ctx.lineTo(this.cx, this.cy);
+            ctx.lineTo(this.ax, this.ay);
         };
         ctx.fillStyle = this.style.fillGradient ?? this.style.fillColor;
         ctx.strokeStyle = this.style.strokeGradient ?? this.style.strokeColor;
@@ -94,6 +68,30 @@ export class RotatedRectangle
 
         ctx.closePath();
 
+        if (this.debug) {
+            ctx.fillStyle = theme.textColor;
+            ctx.fillText("a", this.ax - 5, this.ay);
+            ctx.fillText("b", this.bx, this.by);
+            ctx.fillText("c", this.cx - 5, this.cy + 5);
+            ctx.fillStyle = theme.textColor;
+            ctx.fillText("d", this.dx, this.dy + 5);
+            ctx.beginPath();
+            ctx.moveTo(this.ax, this.ay);
+            ctx.lineTo(this.bx, this.by);
+            ctx.lineTo(this.cx, this.cy);
+            ctx.lineTo(this.ax, this.ay);
+            ctx.fillStyle = "#00f5";
+            ctx.fill();
+            ctx.closePath();
+            ctx.beginPath();
+            ctx.moveTo(this.cx, this.cy);
+            ctx.lineTo(this.bx, this.by);
+            ctx.lineTo(this.dx, this.dy);
+            ctx.lineTo(this.cx, this.cy);
+            ctx.fillStyle = "#0f05";
+            ctx.fill();
+            ctx.closePath();
+        }
     }
     async update(): Promise<void> {}
     #hidden = false;
@@ -109,10 +107,46 @@ export class RotatedRectangle
         this.style = { ...this.initStyles };
     }
     moveBy(v: Vector2): void {
-        this.bounds[0].moveBy(v);
-        this.bounds[1].moveBy(v);
+        this.bounds.moveBy(v);
+        this.bounds.moveBy(v);
     }
     moveTo(v: Vector2): void {
-        throw new Error("Method not implemented.");
+        this.bounds.moveTo(v);
+    }
+    get ax() {
+        return this.bounds.a.x;
+    }
+
+    get ay() {
+        return this.bounds.a.y;
+    }
+    get bx() {
+        return this.bounds.b.x;
+    }
+
+    get by() {
+        return this.bounds.b.y;
+    }
+    get cx() {
+        return this.bounds.c.x;
+    }
+
+    get cy() {
+        return this.bounds.c.y;
+    }
+    get dx() {
+        return this.bounds.d.x;
+    }
+    get dy() {
+        return this.bounds.d.y;
+    }
+    get angle() {
+        return this.bounds.angle;
+    }
+    set angle(deg: number) {
+        this.bounds.angle = deg;
+    }
+    get radAngle(){
+        return this.bounds.radAngle;
     }
 }

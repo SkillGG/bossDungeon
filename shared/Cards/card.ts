@@ -181,12 +181,12 @@ export class DungeonCard extends Card<DungeonCardData> {
     treasure: TreasureType;
     damage: number;
     special: boolean;
-    constructor(c: DungeonCard, newid: string, options?: DungeonCardData);
+    constructor(c: DungeonCard, newid: string, options?: Partial<DungeonCardData>);
     constructor(id: string, options: DungeonCardOptions);
     constructor(
         cardOrID: string | DungeonCard,
         id: string | DungeonCardOptions,
-        opts?: DungeonCardData
+        opts?: Partial<DungeonCardData>
     ) {
         if (typeof cardOrID === "string" && typeof id === "object") {
             // create new card
@@ -298,12 +298,12 @@ export class BossCard extends Card<BossCardData> {
 
     life: number;
 
-    constructor(c: BossCard, newid: string, o: BossCardData);
+    constructor(c: BossCard, newid: string, o: Partial<BossCardData>);
     constructor(dbid: string, o: BossCardOptions);
     constructor(
         cardOrID: string | BossCard,
         id: string | BossCardOptions,
-        opts?: BossCardData
+        opts?: Partial<BossCardData>
     ) {
         if (typeof cardOrID === "string" && typeof id === "object") {
             const options = id;

@@ -34,17 +34,17 @@ export class Rectangle
         style?: Partial<RectangleStyle>,
         zIndex?: number
     ) {
-        super(id, [bounds], zIndex);
+        super(id, bounds, zIndex);
         this.style = { ...RectangleDefaultStyle, ...style };
         this.initStyles = { ...this.style };
     }
     moveBy(v: Vector2): void {
-        this.bounds[0].pos.x += v[0];
-        this.bounds[0].pos.y += v[1];
+        this.bounds.pos.x += v[0];
+        this.bounds.pos.y += v[1];
     }
     moveTo(v: Vector2): void {
-        this.bounds[0].pos.x = v[0];
-        this.bounds[0].pos.y = v[1];
+        this.bounds.pos.x = v[0];
+        this.bounds.pos.y = v[1];
     }
     clearStyles(): void {
         this.style = { ...this.initStyles };
@@ -59,7 +59,7 @@ export class Rectangle
     async update() {}
     async render(ctx: CanvasRenderingContext2D) {
         if (this.#hidden) return;
-        const { x, y, width: w, height: h } = this.bounds[0];
+        const { x, y, width: w, height: h } = this.bounds;
         if (w * h === 0) return;
         ctx.beginPath();
         ctx.fillStyle = this.style.fillGradient ?? this.style.fillColor;
@@ -82,6 +82,6 @@ export class Rectangle
     }
     intersects(bounds: RectangleBounds) {
         if (this.#hidden) return;
-        return this.bounds[0].intersects(bounds);
+        return this.bounds.intersects(bounds);
     }
 }

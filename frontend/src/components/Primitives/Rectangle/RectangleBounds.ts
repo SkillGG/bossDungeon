@@ -157,9 +157,3 @@ export class RectangleBounds {
         if (this.height < 0) this.pos.y -= this.height = Math.abs(this.height);
     }
 }
-
-export interface RotatedRectangleBounds {
-    /**
-     * TODO: Rotated Rectangles
-     */
-}
