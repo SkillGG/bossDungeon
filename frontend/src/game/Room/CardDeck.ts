@@ -1,5 +1,4 @@
 import {
-    Card,
     Cards,
     DungeonCard,
     SpellCard,

@@ -1,4 +1,3 @@
-import { timerShape } from "../events";
 import { Card, Cards } from "./card";
 import { z } from "zod";
 

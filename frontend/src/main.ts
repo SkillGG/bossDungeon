@@ -1,4 +1,4 @@
-import { BossCard, Cards, DungeonCard } from "../../shared/Cards/card";
+import {  Cards, DungeonCard } from "../../shared/Cards/card";
 import { GameSettings } from "./UI";
 import { FpsCounter } from "./components/FpsCounter/fpsCounter";
 import { RectangleBounds } from "./components/Primitives/Rectangle/RectangleBounds";
@@ -6,7 +6,6 @@ import { RotatedRectangleBounds } from "./components/Primitives/Rectangle/Rotate
 import { SpriteLoader } from "./components/Primitives/Sprite/SpriteLoader";
 import { Game } from "./game";
 import { GameMenu } from "./game/Menu/menu";
-import { BossGameCard } from "./game/Room/GameCards/bossGameCard";
 import { DungeonGameCard } from "./game/Room/GameCards/dungeonGameCard";
 import { RoomBoard } from "./game/Room/board";
 import { RoomLobby } from "./game/Room/lobby";

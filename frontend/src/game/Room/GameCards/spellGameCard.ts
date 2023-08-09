@@ -13,7 +13,7 @@ export class SpellGameCard extends GameCard<SpellCard> {
         zIndex = oCARD_Z
     ) {
         super(card, bounds, zIndex);
-        const { width: w, height: h } = bounds;
+        const { width: w} = bounds;
         this.nameLabel = new Label(
             `card_${card.id}_label`,
             new RectangleBounds(0, 0, w, 25),
