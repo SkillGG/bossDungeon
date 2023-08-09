@@ -30,6 +30,7 @@ export class Deck {
 
     static fromString(s: string) {
         const deck = new Deck();
+        console.log("From string");
         const deckAsArray = JSON.parse(s);
         for (const cardStr of Deck.fromStringData.parse(deckAsArray)) {
             const card = Card.fromString(cardStr);
