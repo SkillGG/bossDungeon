@@ -153,7 +153,6 @@ export class TriangleBounds {
     moveBy(pos: Vector2): void;
     moveBy(x: number, y: number): void;
     moveBy(posOrX: Vector2 | Vector_2 | number, y?: number): void {
-        console.log("moving triangle", this.a, this.b, this.c, posOrX);
         if (typeof posOrX === "number" && typeof y === "number") {
             this.a.x += posOrX;
             this.a.y += y;
