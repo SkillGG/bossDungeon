@@ -104,7 +104,6 @@ export class RoomBoard extends StateManager<GameState> {
         this.room.on("endCountdown", ({ data }) => {
             if (data.type === "pickBoss") {
                 const card = Card.fromString(data.boss.cardStr);
-                console.log("bosscard", card, BossCard.isBossCard(card));
                 if (BossCard.isBossCard(card)) this.bossPicked(card);
             }
         });
