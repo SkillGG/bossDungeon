@@ -1,12 +1,8 @@
-import {  Cards, DungeonCard } from "../../shared/Cards/card";
 import { GameSettings } from "./UI";
 import { FpsCounter } from "./components/FpsCounter/fpsCounter";
-import { RectangleBounds } from "./components/Primitives/Rectangle/RectangleBounds";
-import { RotatedRectangleBounds } from "./components/Primitives/Rectangle/RotatedRectangleBounds";
 import { SpriteLoader } from "./components/Primitives/Sprite/SpriteLoader";
 import { Game } from "./game";
 import { GameMenu } from "./game/Menu/menu";
-import { DungeonGameCard } from "./game/Room/GameCards/dungeonGameCard";
 import { RoomBoard } from "./game/Room/board";
 import { RoomLobby } from "./game/Room/lobby";
 import { Room } from "./game/Room/room";
@@ -69,23 +65,6 @@ SpriteLoader.loadAllSprites().then(() => {
 
     game.manager.addStateManager(GameSettings.manager);
     GameSettings.manager.registerObjects();
-
-    const bC = new DungeonGameCard(
-        new DungeonCard(Cards.dungCards[1], "dC", {}),
-        RotatedRectangleBounds.fromRectangleBounds(
-            new RectangleBounds(200, 200, 100, 200)
-        ),
-        9
-    );
-
-    game.manager.addObject(bC, GameState.MENU);
-
-    bC.update = async () => {
-        if (Game.input.isPointerInTriangles(bC.bounds.triangles)) {
-            bC.angle += 4;
-            bC.radAngle;
-        }
-    };
 
     /**
      * Game loop

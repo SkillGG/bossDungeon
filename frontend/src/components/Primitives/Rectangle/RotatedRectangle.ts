@@ -37,7 +37,13 @@ export class RotatedRectangle
         this.style = { ...RotatedRectangleDefaultStyle, ...styles };
         this.initStyles = { ...this.style };
     }
+
     debug = false;
+    debugColors = {
+        t1: "#00f5",
+        t2: "#0f05",
+        anchor: "yellow",
+    };
     async render(ctx: CanvasRenderingContext2D): Promise<void> {
         if (this.#hidden) return;
         ctx.beginPath();
@@ -80,7 +86,7 @@ export class RotatedRectangle
             ctx.lineTo(this.bx, this.by);
             ctx.lineTo(this.cx, this.cy);
             ctx.lineTo(this.ax, this.ay);
-            ctx.fillStyle = "#00f5";
+            ctx.fillStyle = this.debugColors.t1;
             ctx.fill();
             ctx.closePath();
             ctx.beginPath();
@@ -88,7 +94,18 @@ export class RotatedRectangle
             ctx.lineTo(this.bx, this.by);
             ctx.lineTo(this.dx, this.dy);
             ctx.lineTo(this.cx, this.cy);
-            ctx.fillStyle = "#0f05";
+            ctx.fillStyle = this.debugColors.t2;
+            ctx.fill();
+            ctx.closePath();
+            ctx.beginPath();
+            ctx.arc(
+                this.bounds.absAnchor[0],
+                this.bounds.absAnchor[1],
+                4,
+                0,
+                Math.PI * 2
+            );
+            ctx.fillStyle = this.debugColors.anchor;
             ctx.fill();
             ctx.closePath();
         }
@@ -146,7 +163,7 @@ export class RotatedRectangle
     set angle(deg: number) {
         this.bounds.angle = deg;
     }
-    get radAngle(){
+    get radAngle() {
         return this.bounds.radAngle;
     }
 }
