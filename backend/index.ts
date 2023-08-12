@@ -22,13 +22,13 @@ addSSERoute(
 
         const safeParams = playerIDShape.safeParse(req.params);
         if (!safeParams.success) {
-            res.status(404).send("Room link is not valid!");
+            res.raw.status(404).send("Room link is not valid!");
             return;
         }
         const { playerid } = safeParams.data;
 
         if (gameRoom.openedPlayers.has(playerid)) {
-            res.status(400).send("Player already exists!");
+            res.raw.status(400).send("Player already exists!");
             return;
         }
         res.sseevent("roomData", gameRoom.getRoomLobbyData());

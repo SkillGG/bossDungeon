@@ -43,6 +43,7 @@ export class DungeonGameCard extends GameCard<DungeonCard> {
             }
         );
         this.style = {
+            ...GameCard.DefaultStyle,
             fillColor: "#cc7c",
             strokeColor: card.special ? "gold" : "black",
             strokeWidth: 4,
@@ -50,12 +51,14 @@ export class DungeonGameCard extends GameCard<DungeonCard> {
         this.labels.push(this.nameLabel, this.treauseLabel);
     }
 
-    async update(): Promise<void> {
-        this.nameLabel.update();
+    async update(dT: number): Promise<void> {
+        if(this.hidden) return;
+        await super.update(dT);
         this.nameLabel.text = this.card.name;
     }
 
     async render(ctx: CanvasRenderingContext2D): Promise<void> {
+        if(this.hidden) return;
         await super.render(ctx);
 
         ctx.beginPath();

@@ -9,6 +9,7 @@ export interface RotatedRectangleStyle {
     strokeGradient?: CanvasGradient;
     strokeColor: string;
     strokeWidth: number;
+    opacity: number;
     shadow?: {
         color: string;
         blur: number;
@@ -17,16 +18,16 @@ export interface RotatedRectangleStyle {
     };
 }
 
-export const RotatedRectangleDefaultStyle: RotatedRectangleStyle = {
-    fillColor: "transparent",
-    strokeColor: "black",
-    strokeWidth: 1,
-};
-
 export class RotatedRectangle
     extends BoundedGameObject<RotatedRectangleBounds>
     implements Hideable, Styled<RotatedRectangleStyle>, Movable
 {
+    static DefaultStyle: RotatedRectangleStyle = {
+        fillColor: "transparent",
+        strokeColor: "black",
+        strokeWidth: 1,
+        opacity: 1,
+    };
     constructor(
         id: string,
         bounds: RotatedRectangleBounds,
@@ -34,7 +35,7 @@ export class RotatedRectangle
         zIndex = 0
     ) {
         super(id, bounds, zIndex);
-        this.style = { ...RotatedRectangleDefaultStyle, ...styles };
+        this.style = { ...RotatedRectangle.DefaultStyle, ...styles };
         this.initStyles = { ...this.style };
     }
 
@@ -45,7 +46,10 @@ export class RotatedRectangle
         anchor: "yellow",
     };
     async render(ctx: CanvasRenderingContext2D): Promise<void> {
-        if (this.#hidden) return;
+        if (this.hidden) return;
+        if (typeof this.style.opacity !== "undefined") {
+            ctx.globalAlpha = this.style.opacity;
+        }
         ctx.beginPath();
         const drawShape = () => {
             ctx.moveTo(this.ax, this.ay);
@@ -110,13 +114,13 @@ export class RotatedRectangle
             ctx.closePath();
         }
     }
-    async update(): Promise<void> {}
-    #hidden = false;
+    async update(_dT: number): Promise<void> {}
+    protected hidden = false;
     hide(): void {
-        this.#hidden = true;
+        this.hidden = true;
     }
     show(): void {
-        this.#hidden = false;
+        this.hidden = false;
     }
     style: RotatedRectangleStyle;
     initStyles: RotatedRectangleStyle;

@@ -83,7 +83,10 @@ export type ConnectionGeneric<C extends UserSSEConnection<any>> =
     C extends UserSSEConnection<infer T> ? T : unknown;
 
 export class SSEResponse<T extends UserSSEConnection<Record<string, any[]>>> {
-    res: Response;
+    private res: Response;
+    get raw() {
+        return this.res;
+    }
     constructor(r: Response) {
         this.res = r;
     }
@@ -106,16 +109,6 @@ export class SSEResponse<T extends UserSSEConnection<Record<string, any[]>>> {
             this.res.write(`data: ${dt}\n`);
         }
         this.res.write(`\n`);
-        return this;
-    }
-
-    status(code: number) {
-        this.res.status(code);
-        return this;
-    }
-
-    send(data?: any) {
-        this.res.send(data);
         return this;
     }
 }

@@ -13,7 +13,7 @@ export class SpellGameCard extends GameCard<SpellCard> {
         zIndex = oCARD_Z
     ) {
         super(card, bounds, zIndex);
-        const { width: w} = bounds;
+        const { width: w } = bounds;
         this.nameLabel = new Label(
             `card_${card.id}_label`,
             new RectangleBounds(0, 0, w, 25),
@@ -25,6 +25,7 @@ export class SpellGameCard extends GameCard<SpellCard> {
             }
         );
         this.style = {
+            ...GameCard.DefaultStyle,
             fillColor: "#cc7c",
             strokeColor: card.special ? "gold" : "black",
             strokeWidth: 4,
@@ -32,12 +33,13 @@ export class SpellGameCard extends GameCard<SpellCard> {
         this.labels.push(this.nameLabel);
     }
 
-    async update(): Promise<void> {
-        this.nameLabel.update();
-        this.nameLabel.text = this.card.name;
+    async update(dT: number): Promise<void> {
+        if (this.hidden) return;
+        await super.update(dT);
     }
 
     async render(ctx: CanvasRenderingContext2D): Promise<void> {
+        if (this.hidden) return;
         await super.render(ctx);
 
         ctx.beginPath();

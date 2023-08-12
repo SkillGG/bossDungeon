@@ -72,6 +72,7 @@ export abstract class Card<T extends object> {
         if (exec) {
             const [_, type, dbid, id, uDStr] = exec;
             try {
+                if (!type || !dbid || !id || !uDStr) throw "Incorrect string!";
                 const uDObj = JSON.parse(uDStr.replace(/\/"/, '"'));
                 switch (type) {
                     case "boss":
@@ -181,7 +182,11 @@ export class DungeonCard extends Card<DungeonCardData> {
     treasure: TreasureType;
     damage: number;
     special: boolean;
-    constructor(c: DungeonCard, newid: string, options?: Partial<DungeonCardData>);
+    constructor(
+        c: DungeonCard,
+        newid: string,
+        options?: Partial<DungeonCardData>
+    );
     constructor(id: string, options: DungeonCardOptions);
     constructor(
         cardOrID: string | DungeonCard,
@@ -332,7 +337,7 @@ export class BossCard extends Card<BossCardData> {
 export namespace Cards {
     export type Type = BossCard | HeroCard | DungeonCard | SpellCard;
     export const bossCards: BossCard[] = [
-        new BossCard("boss1", { life: 5, name: "abc" }),
+        new BossCard("boss1", { life: 5, name: "Boss 1" }),
         new BossCard("boss2", { life: 5, name: "Boss 2" }),
         new BossCard("boss3", { life: 5, name: "Boss 3" }),
         new BossCard("boss4", { life: 8, name: "Boss 4" }),

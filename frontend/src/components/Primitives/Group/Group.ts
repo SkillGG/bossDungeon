@@ -1,7 +1,7 @@
 import { Hideable } from "../../../utils/utils";
 import { oGROUP_Z } from "../../../utils/zLayers";
 import { GameObject } from "../../GameObject";
-
+import { ObjectManager } from "../../ObjectManager";
 
 export class Group extends GameObject implements Hideable {
     objects: GameObject[];
@@ -23,7 +23,12 @@ export class Group extends GameObject implements Hideable {
 
     async render(ctx: CanvasRenderingContext2D): Promise<void> {
         if (this.#hidden) return;
-        for (const o of this.objects) await o.render(ctx);
+        const zLayers = ObjectManager.divideByZ(this.objects);
+        for (const zLayer of zLayers) {
+            for (const o of zLayer) {
+                await o.safeCTXRender(ctx);
+            }
+        }
     }
     async update(time: number): Promise<void> {
         if (this.#hidden) return;

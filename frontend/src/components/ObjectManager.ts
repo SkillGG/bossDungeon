@@ -64,11 +64,12 @@ export class ObjectManager<AvailableStates extends string>
         this.stateManagers = this.stateManagers.filter((f) => f.id !== omid);
     }
 
-    private divideByZ = (objects: GameObject[]): GameObject[][] => {
+    static divideByZ = (objects: GameObject[]): GameObject[][] => {
         const zLayers: Map<number, GameObject[]> = new Map();
 
         for (let i = 0; i < objects.length; i++) {
             const o = objects[i];
+            if (!o) continue;
             if (zLayers.has(o.zIndex)) {
                 zLayers.get(o.zIndex)!.push(o);
             } else {
@@ -84,7 +85,9 @@ export class ObjectManager<AvailableStates extends string>
     async render(ctx: CanvasRenderingContext2D) {
         const objectsFromThisState = this.getStateObjects(this.currentState);
         if (objectsFromThisState) {
-            for (const zLayer of this.divideByZ(objectsFromThisState)) {
+            for (const zLayer of ObjectManager.divideByZ(
+                objectsFromThisState
+            )) {
                 for (const obj of zLayer) {
                     await obj.safeCTXRender(ctx);
                 }

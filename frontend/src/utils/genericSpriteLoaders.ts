@@ -24,7 +24,9 @@ export const genericMultiSpriteLoader = (
 ): MultiSpriteLoaderFunction => {
     return async (id: string) => {
         const texture = new Texture();
-        await texture.load(urls[id]);
+        const url = urls[id];
+        if(!url) throw "Url not present!"
+        await texture.load(url);
         const lT = new LoadedTexture(texture, id);
         return new Sprite(lT, {
             source: new RectangleBounds(0, 0, texture.width, texture.height),

@@ -1,6 +1,12 @@
 // #region Math
 
-import { endTimerShape, playerIDShape, roomDataShape, terminateTimerShape, timerShape } from "../../../shared/events";
+import {
+    endTimerShape,
+    playerIDShape,
+    roomDataShape,
+    terminateTimerShape,
+    timerShape,
+} from "../../../shared/events";
 
 export type Vector2 = [number, number];
 export type Vector3 = [number, number, number];
@@ -17,8 +23,10 @@ export const crossProduct = ([Ax, Ay, Az]: Vector3, [Bx, By, Bz]: Vector3) => [
 export const dotProduct = ([Ax, Ay]: Vector2, [Bx, By]: Vector2): number =>
     Ax * Bx - Ay * By;
 
-export const crossProduct2D = (p1: Vector2, p2: Vector2): number =>
-    crossProduct([...p1, 0], [...p2, 0])[2];
+export const crossProduct2D = (p1: Vector2, p2: Vector2): number => {
+    const cP = crossProduct([...p1, 0], [...p2, 0])[2];
+    return cP || 0;
+};
 
 export const lerp = (v0: number, v1: number, t: number) =>
     (1 - t) * v0 + t * v1;
@@ -54,7 +62,9 @@ export const getRandomWeightedNumber = <T>(weights: [number, T][]): T => {
         sum += weight;
         if (rand <= sum) return value;
     }
-    return weights[weights.length - 1][1];
+    const wNum = weights[weights.length - 1];
+    if (wNum) return wNum[1];
+    else throw "Item with id" + (weights.length - 1) + " not found!";
 };
 
 // #endregion Math
@@ -78,15 +88,17 @@ export const $$ = (
         const classes: string[] = [];
         const classRX = /\.(.*?)(?=\.|#|$)/g;
         let foundClass: RegExpExecArray | null;
-        while ((foundClass = classRX.exec(specifier))) {
-            classes.push(foundClass[1]);
-        }
-        let id = "";
+        if (specifier)
+            while ((foundClass = classRX.exec(specifier))) {
+                if (foundClass[1]) classes.push(foundClass[1]);
+            }
+        let id: string = "";
         const idRX = /\#(.*?)(?=\.|#|$)/g;
         let foundID: RegExpExecArray | null;
-        while ((foundID = idRX.exec(specifier))) {
-            id = foundID[1];
-        }
+        if (specifier)
+            while ((foundID = idRX.exec(specifier))) {
+                if (foundID[1]) id = foundID[1];
+            }
         props.id = props.id || id;
         props["class"] =
             (props["class"] ? props["class"] + " " : "") + classes.join(" ");
@@ -172,7 +184,9 @@ const memoColor = (
         if (!(color in colorCache)) {
             colorCache[color] = factory(ctx, color);
         }
-        return colorCache[color];
+        const colorFromCache = colorCache[color];
+        if (!colorFromCache) throw "There is no color" + color + "in cache!";
+        return colorFromCache;
     };
 };
 

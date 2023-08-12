@@ -47,6 +47,7 @@ export class BossGameCard extends GameCard<BossCard> {
             }
         );
         this.style = {
+            ...GameCard.DefaultStyle,
             fillColor: "#ce1121cc",
             strokeColor: "black",
             strokeWidth: 4,
@@ -54,7 +55,9 @@ export class BossGameCard extends GameCard<BossCard> {
         this.labels.push(this.lifeLabel, this.nameLabel);
     }
 
-    async update(): Promise<void> {
+    async update(dT: number): Promise<void> {
+        if(this.hidden) return;
+        await super.update(dT);
         this.nameLabel.update();
         this.lifeLabel.update();
         this.nameLabel.text = this.card.name;
@@ -62,6 +65,7 @@ export class BossGameCard extends GameCard<BossCard> {
     }
 
     async render(ctx: CanvasRenderingContext2D): Promise<void> {
+        if(this.hidden) return;
         await super.render(ctx);
 
         ctx.beginPath();

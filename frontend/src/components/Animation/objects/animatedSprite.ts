@@ -49,6 +49,7 @@ export class AnimatedSprite
         if (this.frame > this.sprites.length - 1) return;
         const sprite = this.sprites[this.frame];
         const { x, y, width, height } = this.bounds;
+        if (!sprite) return;
         sprite.moveTo(
             new RectangleBounds(
                 x + this.offsetXY[0],
@@ -94,7 +95,8 @@ export class AnimatedSprite
     async update(time: number) {
         const frameInterval = 1000 / this.fps;
         if (this.playing) {
-            if (this.frameDelays[this.frame] < this.frameTick) {
+            const fD = this.frameDelays[this.frame] || 0;
+            if (fD < this.frameTick) {
                 const framesUpBy = Math.floor(
                     this.frameTick / (this.frameDelays[this.frame] || 1)
                 );

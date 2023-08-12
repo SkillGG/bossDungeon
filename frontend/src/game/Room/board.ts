@@ -12,7 +12,7 @@ import { RotatedRectangleBounds } from "../../components/Primitives/Rectangle/Ro
 import { StateManager } from "../../components/StateManager";
 import { Game } from "../../game";
 import { GameState, theme } from "../../main";
-import { CardDeck } from "./CardDeck";
+import { CardDeck, CardDeckType } from "./CardDeck";
 import { BossGameCard } from "./GameCards/bossGameCard";
 import { RoomLobby } from "./lobby";
 import { Room } from "./room";
@@ -35,6 +35,8 @@ export class RoomBoard extends StateManager<GameState> {
 
     pickBossTimer: Label;
 
+    playerNameLabel: Label;
+
     constructor(manager: ObjectManager<GameState>, room: Room) {
         super(RoomBoard.DefaultID, manager, GameState.GAME_BOARD);
         this.room = room;
@@ -51,8 +53,21 @@ export class RoomBoard extends StateManager<GameState> {
             }
         );
 
-        this.add(this.pickBossTimer);
+        this.playerNameLabel = new Label(
+            "playerName",
+            new RectangleBounds(Game.WIDTH - 100, 50, 100, 0),
+            "",
+            {
+                label: {
+                    font: "normal 2em 'Lumanosimo', cursive",
+                    textColor: theme.textColor,
+                },
+            }
+        );
+
+        this.add(this.pickBossTimer, this.playerNameLabel);
         this.pickBossTimer.hide();
+        this.playerNameLabel.hide();
     }
 
     resetBoard() {
@@ -60,13 +75,33 @@ export class RoomBoard extends StateManager<GameState> {
             this.removeObject(this.bossCard);
             this.remove(this.bossCard);
         }
+        if (this.selectionDeck) {
+            this.removeObject(this.selectionDeck);
+        }
         this.bossCard = undefined;
         this.boss = undefined;
     }
 
     initBoard() {
         this.initListeners();
+        this.playerNameLabel.text = "You: " + this.room.player;
+        this.playerNameLabel.show();
         this.registerObjects();
+    }
+
+    showCardDismissDeck(deckStr: string) {
+        const gameDeck = Deck.fromString(deckStr);
+        this.selectionDeck = new CardDeck(
+            "scd",
+            [Game.WIDTH / 4, Game.HEIGHT / 2],
+            5
+        );
+        this.selectionDeck.type = CardDeckType.DISMISS;
+        for (const card of gameDeck.cards) {
+            if (SpellCard.isSpellCard(card) || DungeonCard.isDungeonCard(card))
+                this.selectionDeck.addCard(card);
+        }
+        this.registerObject(this.selectionDeck);
     }
 
     initListeners() {
@@ -76,20 +111,7 @@ export class RoomBoard extends StateManager<GameState> {
                 this.initPickingBoss(time);
             } else if (typeof data === "object") {
                 if (data.type === "deckSelection") {
-                    const gameDeck = Deck.fromString(data.deck.deckStr);
-                    this.selectionDeck = new CardDeck(
-                        "scd",
-                        new RectangleBounds(0, 0, Game.WIDTH, Game.HEIGHT),
-                        0
-                    );
-                    for (const card of gameDeck.cards) {
-                        if (SpellCard.isSpellCard(card)) {
-                            this.selectionDeck.addSpellCard(card);
-                        } else if (DungeonCard.isDungeonCard(card)) {
-                            this.selectionDeck.addDungeonCard(card);
-                        }
-                    }
-                    this.registerObject(this.selectionDeck);
+                    this.showCardDismissDeck(data.deck.deckStr);
                 }
             }
         });

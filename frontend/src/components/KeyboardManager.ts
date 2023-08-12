@@ -9,6 +9,8 @@ export const RIGHT_MOUSE_BUTTON = 2;
 
 export class InputManager implements Updateable {
     keysPressed: Set<string>;
+    keysPressedThisUpdate: Set<string>;
+    keysReleasedThisUpdate: Set<string>;
     pointerButtonsPressed: Set<number>;
     pointerButtonsClicked: Set<number>;
     pointerButtonsReleasedThisUpdate: Set<number>;
@@ -48,6 +50,8 @@ export class InputManager implements Updateable {
         this.pointerButtonsClicked = new Set();
         this.pointerButtonsReleasedThisUpdate = new Set();
         this.pointerButtonsPressedThisUpdate = new Set();
+        this.keysPressedThisUpdate = new Set();
+        this.keysReleasedThisUpdate = new Set();
         this.pointerStateChanged = false;
         this._mousePosition = [0, 0];
         this._prevMousePostiion = [0, 0];
@@ -130,6 +134,12 @@ export class InputManager implements Updateable {
     hasPressedMouseButton(k: number) {
         return !!this.pointerButtonsPressedThisUpdate.has(k);
     }
+    hasKeyReleased(code: string) {
+        return this.keysReleasedThisUpdate.has(code);
+    }
+    hasKeyPressed(code: string) {
+        return this.keysPressedThisUpdate.has(code);
+    }
     isPressed(code: string) {
         return this.keysPressed.has(code);
     }
@@ -172,6 +182,7 @@ export class InputManager implements Updateable {
         this.typing = e.target instanceof HTMLInputElement;
         if (this.typing) return;
         this.keysPressed.add(e.code);
+        this.keysPressedThisUpdate.add(e.code);
         if (!this.allowedKeys.has(e.code)) e.preventDefault();
     }
     handlePointerMove(e: PointerEvent) {
@@ -180,6 +191,7 @@ export class InputManager implements Updateable {
     }
     handleKeyUp(e: KeyboardEvent) {
         this.keysPressed.delete(e.code);
+        this.keysReleasedThisUpdate.add(e.code);
     }
     handlePointerUp(e: PointerEvent) {
         this.handlePointerMove(e);
@@ -221,6 +233,8 @@ export class InputManager implements Updateable {
         this.pointerButtonsClicked = new Set();
         this.pointerButtonsPressedThisUpdate = new Set();
         this.pointerButtonsReleasedThisUpdate = new Set();
+        this.keysPressedThisUpdate = new Set();
+        this.keysReleasedThisUpdate = new Set();
         if (!this.firstUpdate) {
             this.handleResize();
             this.firstUpdate = true;
